@@ -37,7 +37,7 @@ namespace Assets.PixelFantasy.PixelHeroes.Common.Scripts.ExampleScripts
 
             if (state == CharacterState.Die || state == CharacterState.Block || state == CharacterState.Climb) return;
             
-            var velocity = _rigidbody.velocity;
+            var velocity = _rigidbody.linearVelocity;
 
             if (Input.x == 0)
             {
@@ -116,7 +116,7 @@ namespace Assets.PixelFantasy.PixelHeroes.Common.Scripts.ExampleScripts
                 }
             }
 
-            _rigidbody.velocity = velocity;
+            _rigidbody.linearVelocity = velocity;
         }
 
         private void Turn(float direction)
