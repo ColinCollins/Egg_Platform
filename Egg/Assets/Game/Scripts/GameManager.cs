@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Bear.UI;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -11,9 +12,17 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    // Update is called once per frame
-    void Update()
+    void Start()
     {
+        InitUIManager();
 
+        StartPanel.Create();
+    }
+
+    private void InitUIManager()
+    {
+        UIManager.Instance.Initialize();
+        ResourcesUILoader newLoader = new ResourcesUILoader("UI/");
+        UIManager.Instance.RegisterLoader(newLoader, 5);
     }
 }
