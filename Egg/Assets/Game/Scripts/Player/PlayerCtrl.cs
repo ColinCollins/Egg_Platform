@@ -7,10 +7,20 @@ using UnityEngine.Rendering.UI;
 
 public class PlayerCtrl : MonoBehaviour, IDebuger
 {
+    [Header("Basic Move")]
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce;
 
     [SerializeField] private float doubleJumpForce;
+
+    [Header("Buffer & Coyote Jump")]
+    [SerializeField] private float bufferJumpWindow = .25f;
+    private float bufferJumpActivated = -1;
+
+    [SerializeField] private float coyoteJumpWindow = .2f;
+    private float coyoteJumpActivated = -1;
+
+
 
     [Header("Collision info")]
     [SerializeField] private float GroundCheckDistance;
@@ -71,28 +81,34 @@ public class PlayerCtrl : MonoBehaviour, IDebuger
 
     private void UpdateAirbornStatus()
     {
-        if (isGrounded && isAirbornes)
+        if (!isGrounded && !isAirbornes)
             BecomeAirborne();
 
-        if (!isGrounded && !isAirbornes)
+        if (isGrounded && isAirbornes)
             HandleLanding();
     }
 
     private void BecomeAirborne()
     {
         isAirbornes = true;
+
+        if (rb.linearVelocityY < 0) 
+            ActivateCoyoteJump();
     }
 
     private void HandleLanding()
     {
         isAirbornes = false;
         canDoubleJump = true;
+
+        AttempBufferJump();
     }
 
     private void HandleMovement()
     {
         if (isWallDetected)
             return;
+
         rb.linearVelocity = new Vector2(xInput * moveSpeed, rb.linearVelocityY);
     }
 
@@ -105,6 +121,7 @@ public class PlayerCtrl : MonoBehaviour, IDebuger
         if (Input.GetKeyDown(KeyCode.Space))
         {
             JumpButton();
+            RequestBufferJump();
         }
     }
 
@@ -129,9 +146,35 @@ public class PlayerCtrl : MonoBehaviour, IDebuger
             Flip();
     }
 
+
+    #region Jump
+
+    private void RequestBufferJump()
+    {
+        if (isAirbornes)
+        bufferJumpActivated = Time.time;
+    }
+
+    private void AttempBufferJump()
+    {
+        if (Time.timeSinceLevelLoad < bufferJumpActivated + bufferJumpWindow)
+        {
+            this.Log("Buffer Jump");
+            bufferJumpActivated = Time.time - 1;
+            Jump();
+        }
+    }
+
+    private void ActivateCoyoteJump() => coyoteJumpActivated = Time.time;
+
+    private void CancelCoyoteJump() => coyoteJumpActivated = Time.time - 1;
+
+    private bool IsCoyoteJumpAvaliable => Time.time < coyoteJumpActivated + coyoteJumpWindow;
+
     private void JumpButton()
     {
-        if (isGrounded)
+        // bool coyoteJumpActivated = IsCoyoteJumpAvaliable;
+        if (isGrounded || IsCoyoteJumpAvaliable)
         {
             Jump();
         }
@@ -139,6 +182,8 @@ public class PlayerCtrl : MonoBehaviour, IDebuger
         {
             DoubleJump();
         }
+
+        CancelCoyoteJump();
     }
 
     private void Jump()
@@ -146,11 +191,16 @@ public class PlayerCtrl : MonoBehaviour, IDebuger
         rb.linearVelocity = new Vector2(rb.linearVelocityX, jumpForce);
     }
 
+    // 只有落地之后，才能再次触发
     private void DoubleJump()
     {
         rb.linearVelocity = new Vector2(rb.linearVelocityX, doubleJumpForce);
         canDoubleJump = false;
+        this.Log("Double Jump");
     }
+
+
+    #endregion
 
     private void Flip()
     {
