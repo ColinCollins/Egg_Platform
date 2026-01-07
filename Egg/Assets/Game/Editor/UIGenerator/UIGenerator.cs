@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UI;
@@ -99,7 +100,14 @@ namespace Game.Editor.UIGenerator
 
         private void CreateLayerGameObject(LayerData layer, Transform parent, string jsonPath)
         {
-            GameObject layerObj = new GameObject(layer.Name);
+            // TextMeshPro 名称处理：改为小写并添加 _txt 后缀
+            string objectName = layer.Name;
+            if (layer.IsTextLayer)
+            {
+                objectName = layer.Name.ToLower() + "_txt";
+            }
+
+            GameObject layerObj = new GameObject(objectName);
             layerObj.transform.SetParent(parent, false);
             layerObj.transform.localScale = Vector3.one;
 
@@ -187,6 +195,38 @@ namespace Game.Editor.UIGenerator
                 // 创建占位符
                 image.color = config.PlaceholderColor;
                 Debug.LogWarning($"Sprite not found for layer: {layer.Name}");
+            }
+
+            // 如果名称包含 _icon_，关闭 Raycast 功能
+            if (layer.Name.Contains("_icon_"))
+            {
+                image.raycastTarget = false;
+            }
+
+            // 如果名称包含 _btn_，自动绑定 CustomButton 脚本
+            if (layer.Name.Contains("_btn_"))
+            {
+                // 使用反射查找 CustomButton 类型（因为它在全局命名空间）
+                System.Type customButtonType = System.Type.GetType("CustomButton, Assembly-CSharp");
+                if (customButtonType == null)
+                {
+                    // 尝试从所有程序集中查找
+                    foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        customButtonType = assembly.GetType("CustomButton");
+                        if (customButtonType != null)
+                            break;
+                    }
+                }
+
+                if (customButtonType != null)
+                {
+                    obj.AddComponent(customButtonType);
+                }
+                else
+                {
+                    Debug.LogWarning($"Failed to find CustomButton type for layer: {layer.Name}");
+                }
             }
         }
 

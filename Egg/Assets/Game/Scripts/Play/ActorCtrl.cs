@@ -1,11 +1,8 @@
 using System;
 using Bear.Logger;
-using NUnit.Framework;
-using SingularityGroup.HotReload;
 using UnityEngine;
-using UnityEngine.Rendering.UI;
 
-public class PlayerCtrl : MonoBehaviour, IDebuger
+public class ActorCtrl : MonoBehaviour, IDebuger
 {
     [Header("Basic Move")]
     [SerializeField] private float moveSpeed;

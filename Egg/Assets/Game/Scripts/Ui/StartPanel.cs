@@ -5,20 +5,20 @@ using UnityEngine.UI;
 
 public class StartPanel : BaseUIView, IDebuger
 {
-    public Button PlayBtn;
+    public CustomButton PlayBtn;
 
     public override void OnOpen()
     {
         base.OnOpen();
-        PlayBtn.onClick.AddListener(OnClickPlay);
+        PlayBtn.OnClick += OnClickPlay;
         
     }
 
-    private void OnClickPlay()
+    private void OnClickPlay(CustomButton btn)
     {
         this.Log("Play Game");
         UIManager.Instance.CloseUI(this); 
-        
+
     }
 
     public static StartPanel Create()
