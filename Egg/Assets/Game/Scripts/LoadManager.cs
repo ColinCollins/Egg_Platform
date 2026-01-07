@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Bear.SaveModule;
 using Bear.UI;
 using DG.Tweening;
 using UnityEngine;
@@ -26,6 +27,7 @@ public class LoadManager : MonoBehaviour
     // 后处理
     private IEnumerator<float> OnPostProcess()
     {
+        DBManager.Instance.Initialize();
         yield return 1;
     }
 

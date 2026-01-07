@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using Bear.Logger;
+using Bear.SaveModule;
 using Bear.UI;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, IDebuger
 {
     // Start is called before the first frame update
     private void Awake()
@@ -17,6 +19,9 @@ public class GameManager : MonoBehaviour
         InitUIManager();
 
         StartPanel.Create();
+        // DB.GameData.CurrentLevel = 2;
+        // DB.GameData.Save();
+        this.Log(DB.GameData.CurrentLevel.ToString());
     }
 
     private void InitUIManager()

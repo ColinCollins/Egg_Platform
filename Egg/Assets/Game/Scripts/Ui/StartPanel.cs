@@ -17,7 +17,8 @@ public class StartPanel : BaseUIView, IDebuger
     private void OnClickPlay()
     {
         this.Log("Play Game");
-        UIManager.Instance.CloseUI(this);
+        UIManager.Instance.CloseUI(this); 
+        
     }
 
     public static StartPanel Create()

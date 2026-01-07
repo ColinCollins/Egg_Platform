@@ -1,0 +1,85 @@
+---
+alwaysApply: true
+---
+
+## Cross-Platform Build and Editor/Runtime Separation Standards
+
+### Cross-Platform Build Requirements
+- **Path Handling**: Always use forward slashes `/` as path separators (Unity standard format)
+  - Use `Path.Combine()` to construct paths, then normalize to Unity path format: `.Replace('\\', '/')`
+  - Avoid hardcoding path separators (like `\` or `/`)
+  - Use Unity APIs like `Application.dataPath`, `Application.streamingAssetsPath` for platform-specific paths
+
+- **Platform-Specific Code**: Use conditional compilation directives to clearly separate platform-specific code
+  - Editor code: Wrap with `#if UNITY_EDITOR` to ensure it never compiles into runtime builds
+  - Mobile code: Use `#if UNITY_IOS || UNITY_ANDROID` for mobile-specific logic
+  - Platform differences: Use `RuntimePlatform` enum for runtime platform detection
+
+### Editor and Runtime Separation Standards
+- **Editor Script Location**: All Editor-related code must be placed in `Editor` folders
+  - Path examples: `Assets/Game/Editor/`, `Assets/Plugins/Editor/`
+  - Scripts in Editor folders are excluded from final builds
+
+- **Conditional Compilation Usage**:
+  #if UNITY_EDITOR
+      // Editor-only code
+      using UnityEditor;
+      // Editor functionality implementation
+  #endif
+  
+  #if !UNITY_EDITOR
+      // Runtime code (excluding Editor)
+      // Mobile/PC runtime logic
+  #endif
+  - **Resource Loading Separation**:
+  - Editor mode: Can use `AssetDatabase.LoadAssetAtPath()` for direct asset loading
+  - Runtime: Must use runtime APIs like `Resources.Load()`, `AssetBundle`, or `Addressables`
+  - Never reference Editor APIs in runtime code
+
+- **File Operation Separation**:
+  - Editor: Can use `System.IO.File`, `System.IO.Directory` for file operations
+  - Runtime: Mobile file systems are restricted, use `Application.persistentDataPath` and `Application.streamingAssetsPath`
+  - Avoid using `File.WriteAllText()` and similar operations that may be restricted at runtime
+
+- **Code Organization Principles**:
+  - Editor utility classes: Use separate namespaces, e.g., `Game.Editor.XXX`
+  - Runtime code: Avoid dependencies on Editor namespaces
+  - Shared code: Extract to common libraries, avoid mixing Editor and runtime code
+
+### Example Standardsp
+// ✅ Correct: Editor code clearly separated
+#if UNITY_EDITOR
+using UnityEditor;
+namespace Game.Editor
+{
+    public class MyEditorTool
+    {
+        [MenuItem("Tools/MyTool")]
+        public static void DoSomething()
+        {
+            // Editor-only functionality
+        }
+    }
+}
+#endif
+
+// ✅ Correct: Runtime code doesn't depend on Editor
+public class GameManager : MonoBehaviour
+{
+    void Start()
+    {
+        // Runtime logic that works on all platforms
+    }
+}
+
+// ❌ Wrong: Runtime code uses Editor API
+public class BadExample : MonoBehaviour
+{
+    void Start()
+    {
+        #if UNITY_EDITOR
+        // Even with conditional compilation, Editor APIs shouldn't be used in runtime classes
+        AssetDatabase.Refresh(); // Wrong!
+        #endif
+    }
+}
