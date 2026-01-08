@@ -3,22 +3,36 @@ using UnityEngine;
 
 namespace Game.Events
 {
+    #region Playing
     // 角色控制，向右
-    public class PlayerRight : EventBase
+    public class PlayerRightMoveEvent : EventBase
     {
         
     }
 
     // 角色控制，向左
 
-    public class PlayerLeft : EventBase
+    public class PlayerLeftMoveEvent : EventBase
+    {
+        
+    }
+    
+    // 取消移动操作
+    public class PlayerMoveCancelEvent : EventBase
     {
         
     }
 
     // 角色控制，跳跃
 
-    public class PlayerJump : EventBase
+    public class PlayerJumpEvent : EventBase
+    {
+        
+    }
+
+    // 暂停游戏
+
+    public class GamePauseEvent : EventBase
     {
         
     }
@@ -26,27 +40,45 @@ namespace Game.Events
 
     // 重置游戏
 
-    public class GameReset : EventBase
+    public class GameResetEvent : EventBase
     {
         
     }
 
-    // 暂停游戏
+    // 暂停游戏,设置面板
 
-    public class GamePause : EventBase
+    public class GameSettingEvent : EventBase
     {
         
     }
 
     // 弹出提示弹窗
-    public class GameTips : EventBase
+    public class GameTipsEvent : EventBase
     {
         
     }
 
     // 开始游戏
-    public class GameStartPlay : EventBase
+    public class GameStartPlayEvent : EventBase
     {
         
     }
+
+    #endregion
+
+    #region GameState 
+
+    public class SwitchGameStateEvent : EventBase<string>
+    {
+        public string NewState => Field1;
+    }
+
+    #endregion 
+
+    #region UI
+
+    // gamepanel pause 状态恢复事件
+    public class GameResumeEvent : EventBase {}
+
+    #endregion 
 }

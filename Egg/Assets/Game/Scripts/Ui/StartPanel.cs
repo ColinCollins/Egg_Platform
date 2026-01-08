@@ -1,24 +1,24 @@
+using Bear.EventSystem;
 using Bear.Logger;
 using Bear.UI;
-using UnityEngine;
-using UnityEngine.UI;
+using Game.Events;
+using Game.Play;
 
-public class StartPanel : BaseUIView, IDebuger
+public partial class StartPanel : BaseUIView, IDebuger, IEventSender
 {
-    public CustomButton PlayBtn;
+    // public CustomButton PlayBtn;
 
     public override void OnOpen()
     {
         base.OnOpen();
         PlayBtn.OnClick += OnClickPlay;
-        
     }
 
     private void OnClickPlay(CustomButton btn)
     {
-        this.Log("Play Game");
+        // this.Log("Play Game");
         UIManager.Instance.CloseUI(this); 
-
+        this.DispatchEvent(Witness<SwitchGameStateEvent>._, GamePlayStateName.PLAYING);
     }
 
     public static StartPanel Create()

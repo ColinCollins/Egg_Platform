@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Bear.Logger;
 using UnityEngine;
 
@@ -18,7 +19,6 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     private float coyoteJumpActivated = -1;
 
 
-
     [Header("Collision info")]
     [SerializeField] private float GroundCheckDistance;
     [SerializeField] private float WallCheckDistance;
@@ -29,6 +29,39 @@ public class ActorCtrl : MonoBehaviour, IDebuger
 
     private float xInput;
     private float yInput;
+
+    // 是否使用外部输入控制（事件系统）
+    private bool useExternalInput = false;
+
+    #endregion
+
+    #region Public Control Methods
+
+    /// <summary>
+    /// 设置水平移动输入 (-1 到 1)
+    /// </summary>
+    public void SetMoveInput(float input)
+    {
+        useExternalInput = true;
+        xInput = Mathf.Clamp(input, -1f, 1f);
+    }
+
+    /// <summary>
+    /// 启用键盘输入（禁用事件系统输入）
+    /// </summary>
+    public void EnableKeyboardInput()
+    {
+        useExternalInput = false;
+    }
+
+    /// <summary>
+    /// 触发跳跃
+    /// </summary>
+    public void TriggerJump()
+    {
+        JumpButton();
+        RequestBufferJump();
+    }
 
     #endregion
 
@@ -89,7 +122,7 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     {
         isAirbornes = true;
 
-        if (rb.linearVelocityY < 0) 
+        if (rb.linearVelocityY < 0)
             ActivateCoyoteJump();
     }
 
@@ -109,16 +142,21 @@ public class ActorCtrl : MonoBehaviour, IDebuger
         rb.linearVelocity = new Vector2(xInput * moveSpeed, rb.linearVelocityY);
     }
 
+    [Conditional("UNITY_EDITOR")]
     private void HandleInput()
     {
-        xInput = Input.GetAxisRaw("Horizontal");
+        // 如果使用外部输入（事件系统），则不覆盖 xInput
+        if (!useExternalInput)
+        {
+            xInput = Input.GetAxisRaw("Horizontal");
+        }
+
         yInput = Input.GetAxisRaw("Vertical");
 
-        // Temp
+        // Temp - 键盘输入仍然可用
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            JumpButton();
-            RequestBufferJump();
+            TriggerJump();
         }
     }
 
@@ -149,7 +187,7 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     private void RequestBufferJump()
     {
         if (isAirbornes)
-        bufferJumpActivated = Time.time;
+            bufferJumpActivated = Time.time;
     }
 
     private void AttempBufferJump()
@@ -223,4 +261,26 @@ public class ActorCtrl : MonoBehaviour, IDebuger
         Gizmos.DrawLine(pos, new Vector2(pos.x, pos.y - GroundCheckDistance));
         Gizmos.DrawLine(pos, new Vector2(pos.x + WallCheckDistance, pos.y));
     }
+
+
+    #region Collision Check
+
+    // 正在碰撞指定对象
+    private bool IsCollision;
+    private LayerMask _checkMask;
+    // 检测是否进入
+    public bool CheckCollisionLayer(LayerMask layer)
+    {   
+        if (_checkMask != layer)
+            _checkMask = layer;
+
+        return IsCollision;
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        IsCollision = collision.gameObject.layer == _checkMask;
+    }
+
+    #endregion 
 }

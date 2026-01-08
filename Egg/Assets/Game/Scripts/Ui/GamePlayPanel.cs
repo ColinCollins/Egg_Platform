@@ -4,21 +4,20 @@ using Bear.UI;
 using Game.Events;
 using UnityEngine;
 
-public class GamePlayPanel : BaseUIView, IDebuger, IEventSender
+public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
 {
-    [SerializeField] private CustomButton ResetBtn;
+    #region System
+    private bool isPause = false;
 
-    [SerializeField] private CustomButton PauseBtn;
+    private EventSubscriber _subscriber;
 
-    [SerializeField] private CustomButton TipsBtn;
+    #endregion 
 
     #region Player ctrl
 
+    private bool isRightDown = false;
 
-    [SerializeField] private CustomButton JumpBtn;
-
-    [SerializeField] private CustomButton RightBtn;
-    [SerializeField] private CustomButton LeftBtn;
+    private bool isLeftDown = false;
 
     #endregion
 
@@ -26,49 +25,102 @@ public class GamePlayPanel : BaseUIView, IDebuger, IEventSender
     {
         base.OnOpen();
         ResetBtn.OnClick += OnClickReset;
-        PauseBtn.OnClick += OnClickPause;
+        PauseBtn.OnClick += OnClickSetting;
         TipsBtn.OnClick += OnClickTips;
 
-        JumpBtn.OnClick += OnClickJump;
-        RightBtn.OnClick += OnClickRight;
-        LeftBtn.OnClick += OnClickLeft;
+        JumpBtn.OnClickDown += OnClickJump;
+        RightMoveBtn.OnClickDown += OnClickDownRight;
+        LeftMoveBtn.OnClickDown += OnClickDownLeft;
 
+        RightMoveBtn.OnClickUp += OnClickUpRight;
+        LeftMoveBtn.OnClickUp += OnClickUpLeft;
+
+        isPause = false;
+        isRightDown = false;
+        isLeftDown = false;
+
+        AddListener();
+    }
+
+    private void AddListener()
+    {
+        EventsUtils.ResetEvents(ref _subscriber);
+        _subscriber.Subscribe<ResumeGamePanelEvent>(OnGamePanelResume);
+    }
+
+    private void OnClickDownRight(CustomButton btn)
+    {
+        this.Log("Right Down");
+        isRightDown = true;
+    }
+
+    private void OnClickDownLeft(CustomButton btn)
+    {
+        this.Log("Left Down");
+        isLeftDown = true;
+    }
+
+    private void OnClickUpRight(CustomButton btn)
+    {
+        this.Log("Right Up");
+        isRightDown = false;
+    }
+
+    private void OnClickUpLeft(CustomButton btn)
+    {
+        this.Log("Left Up");
+        isLeftDown = false;
+    }
+
+    private void OnClickJump(CustomButton btn)
+    {
+        this.Log("Jump");
+        this.DispatchEvent(Witness<PlayerJumpEvent>._);
+    }
+
+    void Update()
+    {
+        if (isPause)
+            return;
+
+        if (isRightDown)
+            this.DispatchEvent(Witness<PlayerRightMoveEvent>._);
+        else if (isLeftDown)
+            this.DispatchEvent(Witness<PlayerLeftMoveEvent>._);
     }
 
     private void OnClickReset(CustomButton btn)
     {
         this.Log("Play Game");
-        this.DispatchEvent(Witness<GameReset>._);
+        isPause = true;
+        this.DispatchEvent(Witness<GameResetEvent>._);
     }
 
-    private void OnClickPause(CustomButton btn)
+    private void OnClickSetting(CustomButton btn)
     {
         this.Log("Pause Game");
-        this.DispatchEvent(Witness<GamePause>._);
-    } 
+        isPause = true;
+        this.DispatchEvent(Witness<GameSettingEvent>._);
+    }
 
     private void OnClickTips(CustomButton btn)
     {
         this.Log("Tips Panel");
-        this.DispatchEvent(Witness<GameTips>._);
-    } 
+        isPause = true;
+        this.DispatchEvent(Witness<GameTipsEvent>._);
+    }
 
-    private void OnClickJump(CustomButton btn)
+    private void OnGamePanelResume(ResumeGamePanelEvent evt)
     {
-        this.Log("Jump");
-        this.DispatchEvent(Witness<PlayerJump>._);
-    } 
+        isPause = false;   
+    }
 
-    private void OnClickRight(CustomButton btn)
+    public override void OnClose()
     {
-        this.Log("Right");
-        this.DispatchEvent(Witness<PlayerJump>._);
-    } 
+        base.OnClose();
+        EventsUtils.ResetEvents(ref _subscriber);
+    }
 
-    private void OnClickLeft(CustomButton btn)
-    {
-        this.Log("Left");
-    } 
     public static GamePlayPanel Create()
     {
         var panel = UIManager.Instance.OpenUI<GamePlayPanel>($"{typeof(GamePlayPanel).Name}", UILayer.Normal);

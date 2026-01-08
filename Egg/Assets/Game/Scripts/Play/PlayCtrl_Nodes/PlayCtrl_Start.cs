@@ -1,4 +1,5 @@
 using Bear.Fsm;
+using Bear.UI;
 using UnityEngine;
 
 namespace Game.Play
@@ -9,9 +10,13 @@ namespace Game.Play
     [StateMachineNode(typeof(PlayCtrl), GamePlayStateName.START, true)]
     public class PlayCtrl_Start : StateNode
     {
+        private StartPanel startPanel;
         public override void OnEnter()
         {
             Debug.Log($"{nameof(PlayCtrl_Start)} Enter");
+
+            // 创建主界面
+            startPanel = StartPanel.Create();
         }
 
         public override void OnExecute()
@@ -27,6 +32,9 @@ namespace Game.Play
         public override void OnExit()
         {
             Debug.Log($"{nameof(PlayCtrl_Start)} Exit");
+            
+            // 关闭界面
+            UIManager.Instance.CloseUI(startPanel);
         }
     }
 }

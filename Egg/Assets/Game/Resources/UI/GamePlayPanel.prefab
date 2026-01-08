@@ -11,8 +11,10 @@ GameObject:
   - component: {fileID: 3465022182993577011}
   - component: {fileID: 7559735134817797007}
   - component: {fileID: 5447021520508321707}
+  - component: {fileID: 8140094358022712631}
+  - component: {fileID: 1872611922478592211}
   m_Layer: 0
-  m_Name: UI_L_zhujiemian_btn_fangxiang_01
+  m_Name: RightMove_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29,7 +31,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 5983510840233737605}
   m_Father: {fileID: 7868183520521602974}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -75,6 +78,37 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &8140094358022712631
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 723039272645674051}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6f705424d3ac3644b7f44ff3a83b0e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _interactable: 1
+  _hasAim: 1
+  _hasDelay: 1
+  DelayTime: 0.5
+--- !u!114 &1872611922478592211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 723039272645674051}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ec0c2cea1fd8b741822d9816bb534c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Scale: 0.95
+  Delay: 0.1
+  Duration: 0.2
 --- !u!1 &851986737704075071
 GameObject:
   m_ObjectHideFlags: 0
@@ -105,11 +139,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7868183520521602974}
+  m_Father: {fileID: 7918172321493103445}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -803, y: -410}
+  m_AnchoredPosition: {x: 1, y: 0.5}
   m_SizeDelta: {x: 148, y: 114}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5282447934905831545
@@ -175,16 +209,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1993813556568205058}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7868183520521602974}
+  m_Father: {fileID: 386138750165679570}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -666, y: 440.5}
+  m_AnchoredPosition: {x: -6, y: 2}
   m_SizeDelta: {x: 94, y: 91}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5712234297319781129
@@ -250,16 +284,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3760685420122380994}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7868183520521602974}
+  m_Father: {fileID: 6981479413871250250}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -502, y: 442.5}
+  m_AnchoredPosition: {x: -2.5, y: 4}
   m_SizeDelta: {x: 88, y: 91}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4193474385666908082
@@ -329,19 +363,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7918172321493103445}
-  - {fileID: 5171992292053714980}
   - {fileID: 3465022182993577011}
-  - {fileID: 5983510840233737605}
   - {fileID: 2343512532009084358}
-  - {fileID: 1780303187160264855}
   - {fileID: 386138750165679570}
   - {fileID: 6981479413871250250}
   - {fileID: 8433453055728759060}
-  - {fileID: 1753173730285602932}
-  - {fileID: 4729504378214948796}
-  - {fileID: 5398578158926741514}
   - {fileID: 1843048199374647702}
-  - {fileID: 5843537241990671696}
   m_Father: {fileID: 7304677386424715066}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -379,11 +406,11 @@ RectTransform:
   m_LocalScale: {x: -1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7868183520521602974}
+  m_Father: {fileID: 3465022182993577011}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -560, y: -410}
+  m_AnchoredPosition: {x: 0, y: 0.5}
   m_SizeDelta: {x: 148, y: 114}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6565773394150812041
@@ -454,11 +481,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7868183520521602974}
+  m_Father: {fileID: 2343512532009084358}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 761.5, y: -407}
+  m_AnchoredPosition: {x: 0.5, y: 3.5}
   m_SizeDelta: {x: 105, y: 156}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &943849637254668584
@@ -513,7 +540,7 @@ GameObject:
   - component: {fileID: 4917635659220220412}
   - component: {fileID: 8855528528214807702}
   m_Layer: 0
-  m_Name: UI_L_zhujiemian_btn_fangxiang_01
+  m_Name: LeftMove_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -530,7 +557,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 5171992292053714980}
   m_Father: {fileID: 7868183520521602974}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -619,7 +647,7 @@ GameObject:
   - component: {fileID: 1641005872429814536}
   - component: {fileID: 1610362956390658853}
   m_Layer: 0
-  m_Name: 59
+  m_Name: Level_txt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -632,16 +660,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6089096835515621748}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7868183520521602974}
+  m_Father: {fileID: 1843048199374647702}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -829.5, y: 417}
+  m_AnchoredPosition: {x: 0, y: -60}
   m_SizeDelta: {x: 83, y: 54}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1641005872429814536
@@ -757,7 +785,7 @@ GameObject:
   - component: {fileID: 4886451936849074601}
   - component: {fileID: 5881614111302577696}
   m_Layer: 0
-  m_Name: UI_L_zhujiemian_btn_fangxiang_01
+  m_Name: Jump_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -774,7 +802,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1780303187160264855}
   m_Father: {fileID: 7868183520521602974}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -876,16 +905,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7619174314297635233}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7868183520521602974}
+  m_Father: {fileID: 8433453055728759060}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -339, y: 441}
+  m_AnchoredPosition: {x: -1.5, y: 2.5}
   m_SizeDelta: {x: 46, y: 102}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &236296764874762199
@@ -955,7 +984,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 5843537241990671696}
   m_Father: {fileID: 7868183520521602974}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -1111,12 +1141,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4195c0e2d24708f489dc7405fd70ef49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ResetBtn: {fileID: 0}
-  PauseBtn: {fileID: 0}
-  TipsBtn: {fileID: 0}
-  JumpBtn: {fileID: 0}
-  RightBtn: {fileID: 0}
-  LeftBtn: {fileID: 0}
+  LeftMoveBtn: {fileID: 4917635659220220412}
+  RightMoveBtn: {fileID: 8140094358022712631}
+  JumpBtn: {fileID: 4886451936849074601}
+  ResetBtn: {fileID: 1223083730408213846}
+  PauseBtn: {fileID: 8343208855987806785}
+  TipsBtn: {fileID: 5623057257945946210}
+  LevelTxt: {fileID: 1610362956390658853}
 --- !u!1 &8339247278441668139
 GameObject:
   m_ObjectHideFlags: 0
@@ -1131,7 +1162,7 @@ GameObject:
   - component: {fileID: 8343208855987806785}
   - component: {fileID: 384146548626411940}
   m_Layer: 0
-  m_Name: UI_L_zhujiemian_btn_gongneng_01
+  m_Name: Pause_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1148,7 +1179,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 4729504378214948796}
   m_Father: {fileID: 7868183520521602974}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -1239,7 +1271,7 @@ GameObject:
   - component: {fileID: 1223083730408213846}
   - component: {fileID: 1290792792328603643}
   m_Layer: 0
-  m_Name: UI_L_zhujiemian_btn_gongneng_01
+  m_Name: Reset_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1256,7 +1288,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1753173730285602932}
   m_Father: {fileID: 7868183520521602974}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -1347,7 +1380,7 @@ GameObject:
   - component: {fileID: 5623057257945946210}
   - component: {fileID: 8335817061617224354}
   m_Layer: 0
-  m_Name: UI_L_zhujiemian_btn_gongneng_01
+  m_Name: Tips_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1364,7 +1397,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 5398578158926741514}
   m_Father: {fileID: 7868183520521602974}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}

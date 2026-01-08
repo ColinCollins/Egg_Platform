@@ -9,9 +9,18 @@ namespace Game.Play
     [StateMachineNode(typeof(PlayCtrl), GamePlayStateName.SUCCESS, false)]
     public class PlayCtrl_Success : StateNode
     {
+        private PlayCtrl owner;
+
         public override void OnEnter()
         {
             Debug.Log($"{nameof(PlayCtrl_Success)} Enter");
+
+            owner = _owner as PlayCtrl;
+        }
+
+        private void AddListener()
+        {
+            // owner.Subscriber<>();
         }
 
         public override void OnExecute()

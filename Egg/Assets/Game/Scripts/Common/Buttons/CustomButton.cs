@@ -7,7 +7,10 @@ using UnityEngine.UI;
 
 public delegate void CustomButtonClick(CustomButton btn);
 
-public sealed class CustomButton : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, ICancelHandler
+public sealed class CustomButton : MonoBehaviour,
+IPointerClickHandler,
+IPointerDownHandler,
+IPointerUpHandler, ICancelHandler
 {
     // 是否可以交互
     [SerializeField] private bool _interactable = true;
@@ -19,7 +22,7 @@ public sealed class CustomButton : MonoBehaviour, IPointerClickHandler, IPointer
 
     private bool isTrigger = false;
     private float _waitingTime = 0;
-    
+
     private Graphic _graphic;
     private Collider2D _collider2D;
     // Interactable switch handle
@@ -28,26 +31,29 @@ public sealed class CustomButton : MonoBehaviour, IPointerClickHandler, IPointer
 
     private Action<bool> OnButtonDownPerformer;
     private Action<bool> OnButtonUpPerformer;
-    
+
     public Graphic BGraphic => _graphic;
-    
+
     public bool Interactable
     {
         get => _interactable;
         set
         {
             _interactable = value;
-            if (_collider2D != null) 
+            if (_collider2D != null)
                 _collider2D.enabled = value;
-            
+
             if (_graphic != null)
                 _graphic.raycastTarget = value;
 
             InteractableHandle?.Invoke(value);
         }
     }
-    
+
     public event CustomButtonClick OnClick;
+
+    public event CustomButtonClick OnClickDown;
+    public event CustomButtonClick OnClickUp;
 
     void Awake()
     {
@@ -82,7 +88,7 @@ public sealed class CustomButton : MonoBehaviour, IPointerClickHandler, IPointer
     {
         if (isTrigger)
             return;
-        
+
         isTrigger = true;
         OnClick?.Invoke(this);
     }
@@ -90,11 +96,15 @@ public sealed class CustomButton : MonoBehaviour, IPointerClickHandler, IPointer
     public void OnPointerDown(PointerEventData eventData)
     {
         OnButtonDownPerformer?.Invoke(_hasAim);
+
+        OnClickDown?.Invoke(this);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
         OnButtonUpPerformer?.Invoke(_hasAim);
+
+        OnClickUp?.Invoke(this);
     }
 
     public void OnCancel(BaseEventData eventData)
