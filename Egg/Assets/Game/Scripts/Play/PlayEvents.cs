@@ -73,6 +73,8 @@ namespace Game.Events
         public string NewState => Field1;
     }
 
+    public class NextLevelEvent : EventBase {}
+
     #endregion 
 
     #region UI

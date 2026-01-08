@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Bear.Logger;
+using Bear.SaveModule;
 using Bear.UI;
 using Game.Common;
 using UnityEngine;
@@ -17,6 +18,8 @@ public class GameManager : MonoSingleton<GameManager>, IDebuger
     void Start()
     {
         InitUIManager();
+        // Test
+        DBManager.Instance.Initialize();
 
         PlayCtrl.Instance.Init();
         // this.Log(DB.GameData.CurrentLevel.ToString());

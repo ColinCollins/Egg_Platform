@@ -2,6 +2,7 @@ using Bear.EventSystem;
 using Bear.Logger;
 using Bear.UI;
 using Game.Events;
+using Game.Play;
 using UnityEngine;
 
 public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
@@ -45,7 +46,8 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
     private void AddListener()
     {
         EventsUtils.ResetEvents(ref _subscriber);
-        _subscriber.Subscribe<ResumeGamePanelEvent>(OnGamePanelResume);
+        _subscriber.Subscribe<GameResumeEvent>(OnGamePanelResume);
+        _subscriber.Subscribe<SwitchGameStateEvent>(OnGameStateChanged);
     }
 
     private void OnClickDownRight(CustomButton btn)
@@ -74,6 +76,9 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
 
     private void OnClickJump(CustomButton btn)
     {
+        if (isPause)
+            return;
+
         this.Log("Jump");
         this.DispatchEvent(Witness<PlayerJumpEvent>._);
     }
@@ -87,6 +92,8 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
             this.DispatchEvent(Witness<PlayerRightMoveEvent>._);
         else if (isLeftDown)
             this.DispatchEvent(Witness<PlayerLeftMoveEvent>._);
+        else 
+            this.DispatchEvent(Witness<PlayerMoveCancelEvent>._);
     }
 
     private void OnClickReset(CustomButton btn)
@@ -110,9 +117,14 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
         this.DispatchEvent(Witness<GameTipsEvent>._);
     }
 
-    private void OnGamePanelResume(ResumeGamePanelEvent evt)
+    private void OnGamePanelResume(GameResumeEvent evt)
     {
-        isPause = false;   
+        isPause = false;
+    }
+
+    private void OnGameStateChanged(SwitchGameStateEvent evt)
+    {
+        isPause = !evt.NewState.Equals(GamePlayStateName.PLAYING);
     }
 
     public override void OnClose()

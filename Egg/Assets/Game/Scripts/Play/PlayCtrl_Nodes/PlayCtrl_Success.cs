@@ -11,11 +11,18 @@ namespace Game.Play
     {
         private PlayCtrl owner;
 
+        private GameVictoryPanel _gameVictoryPanel;
+
         public override void OnEnter()
         {
             Debug.Log($"{nameof(PlayCtrl_Success)} Enter");
 
             owner = _owner as PlayCtrl;
+
+            // 处理等级
+
+            owner.Level.Victory();
+            _gameVictoryPanel = GameVictoryPanel.Create();
         }
 
         private void AddListener()

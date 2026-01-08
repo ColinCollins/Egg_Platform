@@ -32,9 +32,7 @@ namespace Game.Play
         public override void OnExit()
         {
             Debug.Log($"{nameof(PlayCtrl_Start)} Exit");
-            
-            // 关闭界面
-            UIManager.Instance.CloseUI(startPanel);
+            startPanel = null;
         }
     }
 }

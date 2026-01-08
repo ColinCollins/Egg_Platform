@@ -27,11 +27,9 @@ public class ActorCtrl : MonoBehaviour, IDebuger
 
     #region Temp
 
+    public bool IsEditor = false;
     private float xInput;
     private float yInput;
-
-    // 是否使用外部输入控制（事件系统）
-    private bool useExternalInput = false;
 
     #endregion
 
@@ -42,16 +40,13 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     /// </summary>
     public void SetMoveInput(float input)
     {
-        useExternalInput = true;
         xInput = Mathf.Clamp(input, -1f, 1f);
     }
 
-    /// <summary>
-    /// 启用键盘输入（禁用事件系统输入）
-    /// </summary>
-    public void EnableKeyboardInput()
+    // 基本上是用于测试的
+    public void UpdateAnimation()
     {
-        useExternalInput = false;
+        HandleAnimators();
     }
 
     /// <summary>
@@ -98,7 +93,7 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     }
 
     // Update is called once per frame
-    void Update()
+    public void OnUpdate()
     {
         UpdateAirbornStatus();
         HandleInput();
@@ -138,19 +133,22 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     {
         if (isWallDetected)
             return;
-
+        // this.Log("----------------" + xInput);
         rb.linearVelocity = new Vector2(xInput * moveSpeed, rb.linearVelocityY);
     }
 
     [Conditional("UNITY_EDITOR")]
     private void HandleInput()
     {
-        // 如果使用外部输入（事件系统），则不覆盖 xInput
-        if (!useExternalInput)
+        if (Input.GetKeyDown(KeyCode.Q))
         {
-            xInput = Input.GetAxisRaw("Horizontal");
+            IsEditor = !IsEditor;
         }
 
+        if (!IsEditor)
+            return;
+
+        xInput = Input.GetAxisRaw("Horizontal");
         yInput = Input.GetAxisRaw("Vertical");
 
         // Temp - 键盘输入仍然可用
@@ -270,16 +268,16 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     private LayerMask _checkMask;
     // 检测是否进入
     public bool CheckCollisionLayer(LayerMask layer)
-    {   
+    {
         if (_checkMask != layer)
             _checkMask = layer;
 
         return IsCollision;
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D other)
     {
-        IsCollision = collision.gameObject.layer == _checkMask;
+        IsCollision = 1 << other.gameObject.layer == _checkMask;
     }
 
     #endregion 

@@ -16,9 +16,9 @@ public partial class StartPanel : BaseUIView, IDebuger, IEventSender
 
     private void OnClickPlay(CustomButton btn)
     {
-        // this.Log("Play Game");
-        UIManager.Instance.CloseUI(this); 
         this.DispatchEvent(Witness<SwitchGameStateEvent>._, GamePlayStateName.PLAYING);
+        // this.Log("Play Game");
+        UIManager.Instance.CloseUI(this);
     }
 
     public static StartPanel Create()

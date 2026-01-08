@@ -13,7 +13,10 @@ namespace Game.Level
     /// </summary>
     public class BaseLevelCtrl : MonoBehaviour, IDebuger, IEventSender
     {
-        [SerializeField] private LayerMask SuccessLayer;
+        // [SerializeField] private LayerMask SuccessLayer;
+        [SerializeField] private LayerMask FailLayer;
+        // Success
+        [SerializeField] private OnTrigger2DHandle onTrigger2DHandle;
 
         [SerializeField] private ActorCtrl actor;
         public ActorCtrl Actor => actor;
@@ -24,6 +27,8 @@ namespace Game.Level
         // 移动状态
         private bool isMovingRight = false;
         private bool isMovingLeft = false;
+
+        private bool isActorEnterDoor = false;
 
         protected bool isPause = false;
         protected bool isFinished = false;
@@ -40,6 +45,7 @@ namespace Game.Level
         private void Start()
         {
             AddListener();
+            GameResume();
         }
 
         /// <summary>
@@ -55,17 +61,23 @@ namespace Game.Level
 
             _subscriber.Subscribe<GamePauseEvent>(OnGamePause);
             _subscriber.Subscribe<GameResumeEvent>(OnGameResume);
-
         }
 
 
-        private void OnGamePause(GamePauseEvent evt)
+        protected void OnGamePause(GamePauseEvent evt)
         {
             isPause = true;
+            onTrigger2DHandle.OnEnter -= OnActorTrigger2D;
         }
-        private void OnGameResume(GameResumeEvent evt)
+        protected void OnGameResume(GameResumeEvent evt)
+        {
+            GameResume();
+        }
+
+        private void GameResume()
         {
             isPause = false;
+            onTrigger2DHandle.OnEnter += OnActorTrigger2D;
         }
 
         #region Movement
@@ -80,6 +92,8 @@ namespace Game.Level
             {
                 isMovingRight = true;
                 actor.SetMoveInput(1f);
+
+                this.Log("Right Moving ----------------- ");
             }
         }
 
@@ -92,6 +106,8 @@ namespace Game.Level
             {
                 isMovingLeft = true;
                 actor.SetMoveInput(-1f);
+
+                // this.Log("Left Moving ----------------- ");
             }
         }
 
@@ -100,11 +116,19 @@ namespace Game.Level
         /// </summary>
         private void OnPlayerMoveCancel(PlayerMoveCancelEvent evt)
         {
+            StopMove();
+        }
+
+        private void StopMove()
+        {
             if (actor != null)
             {
                 isMovingRight = false;
                 isMovingLeft = false;
                 actor.SetMoveInput(0f);
+                actor.UpdateAnimation();
+
+                // this.Log("Stop Moving ----------------- ");
             }
         }
 
@@ -128,11 +152,28 @@ namespace Game.Level
                 return;
 
             CheckFinished();
+            Actor.OnUpdate();
+        }
+
+        private void OnActorTrigger2D(Collider2D collider)
+        {
+            if (collider.gameObject.tag.Equals("Player"))
+            {
+                isActorEnterDoor = true;
+                return;
+            }
+
+            isActorEnterDoor = false;
         }
 
         public virtual bool IsSuccess()
         {
-            return Actor.CheckCollisionLayer(SuccessLayer);
+            return isActorEnterDoor;
+        }
+
+        public virtual bool IsFail()
+        {
+            return Actor.CheckCollisionLayer(FailLayer);
         }
 
         public virtual void CheckFinished()
@@ -141,6 +182,19 @@ namespace Game.Level
             {
                 isFinished = true;
                 this.DispatchEvent(Witness<SwitchGameStateEvent>._, GamePlayStateName.SUCCESS);
+                return;
+            }
+
+            if (IsFail())
+            {
+                isFinished = true;
+                this.DispatchEvent(Witness<GameResetEvent>._);
+                return;
+            }
+
+            if (isFinished)
+            {
+                StopMove();
             }
         }
 
@@ -149,6 +203,11 @@ namespace Game.Level
         /// 销毁关卡时清理
         /// </summary>
         public virtual void DestroyLevel()
+        {
+            Destroy(gameObject);
+        }
+
+        private void OnDestroy()
         {
             EventsUtils.ResetEvents(ref _subscriber);
 
@@ -160,11 +219,6 @@ namespace Game.Level
             {
                 actor.SetMoveInput(0f);
             }
-        }
-
-        private void OnDestroy()
-        {
-            DestroyLevel();
         }
     }
 
