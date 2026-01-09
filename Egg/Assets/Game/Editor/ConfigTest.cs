@@ -230,7 +230,7 @@ namespace Game.Editor
                 return;
             }
 
-            var levelConfig = ConfigManager.Instance.Tables.TbLevelConfig;
+            var levelConfig = ConfigManager.Instance.Tables.TbLevelData;
             if (levelConfig == null)
             {
                 AddLog("Error: TbLevelConfig is null!");
@@ -278,7 +278,7 @@ namespace Game.Editor
             var tables = ConfigManager.Instance.Tables;
             AddLog("=== All Tables Info ===");
             AddLog($"TbGlobalConst: {(tables.TbGlobalConst != null ? "Loaded" : "Null")}");
-            AddLog($"TbLevelConfig: {(tables.TbLevelConfig != null ? "Loaded" : "Null")}");
+            AddLog($"TbLevelConfig: {(tables.TbLevelData != null ? "Loaded" : "Null")}");
             AddLog("");
         }
 
@@ -291,7 +291,7 @@ namespace Game.Editor
                 AddLog($"Initialized: {ConfigManager.Instance.IsInitialized}");
                 AddLog($"Load Progress: {ConfigManager.Instance.LoadProgress * 100:F1}%");
                 AddLog($"TbGlobalConst: {tables.TbGlobalConst?.DataList?.Count ?? 0} items");
-                AddLog($"TbLevelConfig: {tables.TbLevelConfig?.DataList?.Count ?? 0} items");
+                AddLog($"TbLevelConfig: {tables.TbLevelData?.DataList?.Count ?? 0} items");
                 AddLog("");
             }
         }

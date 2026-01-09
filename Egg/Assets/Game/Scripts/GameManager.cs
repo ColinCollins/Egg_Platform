@@ -17,18 +17,6 @@ public class GameManager : MonoSingleton<GameManager>, IDebuger
 
     void Start()
     {
-        InitUIManager();
-        // Test
-        DBManager.Instance.Initialize();
-
         PlayCtrl.Instance.Init();
-        // this.Log(DB.GameData.CurrentLevel.ToString());
-    }
-
-    private void InitUIManager()
-    {
-        UIManager.Instance.Initialize();
-        ResourcesUILoader newLoader = new ResourcesUILoader("UI/");
-        UIManager.Instance.RegisterLoader(newLoader, 5);
     }
 }

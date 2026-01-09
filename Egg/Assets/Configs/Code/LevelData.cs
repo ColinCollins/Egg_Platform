@@ -13,9 +13,9 @@ using SimpleJSON;
 
 namespace Config
 {
-public sealed partial class LevelConfig : Luban.BeanBase
+public sealed partial class LevelData : Luban.BeanBase
 {
-    public LevelConfig(JSONNode _buf) 
+    public LevelData(JSONNode _buf) 
     {
         { if(!_buf["id"].IsNumber) { throw new SerializationException(); }  Id = _buf["id"]; }
         { if(!_buf["level"].IsNumber) { throw new SerializationException(); }  Level = _buf["level"]; }
@@ -23,9 +23,9 @@ public sealed partial class LevelConfig : Luban.BeanBase
         { if(!_buf["lockType"].IsNumber) { throw new SerializationException(); }  LockType = (Level.LevelLockType)_buf["lockType"].AsInt; }
     }
 
-    public static LevelConfig DeserializeLevelConfig(JSONNode _buf)
+    public static LevelData DeserializeLevelData(JSONNode _buf)
     {
-        return new LevelConfig(_buf);
+        return new LevelData(_buf);
     }
 
     /// <summary>
@@ -45,7 +45,7 @@ public sealed partial class LevelConfig : Luban.BeanBase
     /// </summary>
     public readonly Level.LevelLockType LockType;
    
-    public const int __ID__ = -1308229690;
+    public const int __ID__ = 347258158;
     public override int GetTypeId() => __ID__;
 
     public  void ResolveRef(Tables tables)

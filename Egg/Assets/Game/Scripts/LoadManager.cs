@@ -21,7 +21,7 @@ public class LoadManager : MonoBehaviour
     {
         // 加载配置表
         EnqueueFunction(LoadConfigAsync);
-        
+
         // On Finshed
         EnqueueFunction(OnPostProcess);
 
@@ -83,7 +83,17 @@ public class LoadManager : MonoBehaviour
     private IEnumerator<float> OnPostProcess()
     {
         DBManager.Instance.Initialize();
+
+        InitUIManager();
+        
         yield return 1;
+    }
+
+    private void InitUIManager()
+    {
+        UIManager.Instance.Initialize();
+        ResourcesUILoader newLoader = new ResourcesUILoader("./");
+        UIManager.Instance.RegisterLoader(newLoader, 5);
     }
 
     // 添加函数到队列

@@ -15,19 +15,19 @@ namespace Config
 public partial class Tables
 {
     public LubanConfig.TbGlobalConst TbGlobalConst {get; }
-    public TbLevelConfig TbLevelConfig {get; }
+    public TbLevelData TbLevelData {get; }
 
     public Tables(System.Func<string, JSONNode> loader)
     {
         TbGlobalConst = new LubanConfig.TbGlobalConst(loader("lubanconfig_tbglobalconst"));
-        TbLevelConfig = new TbLevelConfig(loader("tblevelconfig"));
+        TbLevelData = new TbLevelData(loader("tbleveldata"));
         ResolveRef();
     }
     
     private void ResolveRef()
     {
         TbGlobalConst.ResolveRef(this);
-        TbLevelConfig.ResolveRef(this);
+        TbLevelData.ResolveRef(this);
     }
 }
 

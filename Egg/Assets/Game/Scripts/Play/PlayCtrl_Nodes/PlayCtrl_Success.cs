@@ -25,11 +25,6 @@ namespace Game.Play
             _gameVictoryPanel = GameVictoryPanel.Create();
         }
 
-        private void AddListener()
-        {
-            // owner.Subscriber<>();
-        }
-
         public override void OnExecute()
         {
             Debug.Log($"{nameof(PlayCtrl_Success)} Execute");

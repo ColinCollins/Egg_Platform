@@ -1,7 +1,6 @@
 using Bear.EventSystem;
 using Bear.Fsm;
 using Bear.Logger;
-using Cysharp.Threading.Tasks;
 using Game.Events;
 using Game.Level;
 using UnityEngine;

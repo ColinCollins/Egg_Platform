@@ -83,6 +83,18 @@ namespace Game.Editor.UIGenerator
             rootRect.anchoredPosition = Vector2.zero;
             rootRect.localScale = Vector3.one;
 
+            // 检查根对象是否实现了 IAutoUIBind 接口，如果实现了则调用 AutoBind
+            MonoBehaviour[] components = rootObj.GetComponents<MonoBehaviour>();
+            foreach (MonoBehaviour component in components)
+            {
+                if (component is IAutoUIBind autoUIBind)
+                {
+                    // autoUIBind.AutoBind();
+                    Debug.Log($"[UIGenerator] AutoBind() called on {rootObj.name} via {component.GetType().Name}");
+                    break; // 只调用第一个实现的组件
+                }
+            }
+
             // 更新设计分辨率
             config.DesignResolution = new Vector2(artboard.Bounds.Width, artboard.Bounds.Height);
 

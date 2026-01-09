@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using Config;
+using Config.LubanConfig;
+using Game.ConfigModule;
 using UnityEngine;
 
 /// <summary>
@@ -7,13 +11,13 @@ public class LevelCtrl
 {
     private bool isReady = false;
 
-    private int _currentLevel;
+    private List<LevelData> datas;
+
     public int CurrentLevel
     {
         get
         {
-            RefreshLevel();
-            return _currentLevel;
+            return DB.GameData.CurrentLevel;
         }
     }
 
@@ -21,14 +25,12 @@ public class LevelCtrl
     {
         if (isReady)
             return;
-    
+
         // 数据加载配置
+        datas = ConfigManager.Instance.Tables.TbLevelData.DataList;
         isReady = true;
 
-        if (DB.GameData.CurrentLevel > 0)
-        {
-            _currentLevel = DB.GameData.CurrentLevel;
-        }
+        RefreshLevel();
     }
 
     public void Victory()
@@ -38,12 +40,55 @@ public class LevelCtrl
             DB.GameData.PassedLevels.Add(CurrentLevel);
             DB.GameData.Save();
         }
+
+        RefreshLevel();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public bool CanEnterLevel()
+    {
+        return DB.GameData.CurrentLevel > 0;
     }
 
     // 根据 pass 和 unlock 确定当前的 最小 level
     public void RefreshLevel()
     {
         // check current config and DB 数据对比
-        _currentLevel = 1;
+        // _currentLevel = 1
+        LevelData data = null;
+        var gameData = DB.GameData;
+        gameData.CurrentLevel = -1;
+
+        for (int i = 0; i < datas.Count; i++)
+        {
+            data = datas[i];
+            if (gameData.PassedLevels.Contains(data.Id))
+            {
+                continue;
+            }
+
+            if (!gameData.UnlockLevels.Contains(data.Id))
+            {
+                if (data.LockType == Config.Level.LevelLockType.Unlock)
+                {
+                    gameData.UnlockLevels.Add(data.Id);
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            // 查询最低 Id 关卡
+            if (gameData.CurrentLevel > data.Id)
+            {
+                gameData.CurrentLevel = data.Id;
+            }
+        }
+
+        DB.GameData.Save();
     }
 }
