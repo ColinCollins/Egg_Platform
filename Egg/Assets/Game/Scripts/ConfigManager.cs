@@ -171,13 +171,7 @@ namespace Game.ConfigModule
         /// </summary>
         private string[] GetConfigFileNames()
         {
-            // 根据 Tables.cs 构造函数中的文件名
-            // 这里需要根据实际生成的配置文件名来设置
-            return new string[]
-            {
-                "config_tbglobalconst",
-                "tblevelconfig"
-            };
+            return ConfigFileNames.GetFileNames();
         }
 
         /// <summary>
