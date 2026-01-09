@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Bear.SaveModule;
 using Bear.UI;
 using DG.Tweening;
+using Game.ConfigModule;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -18,10 +19,64 @@ public class LoadManager : MonoBehaviour
 
     public void Awake()
     {
+        // 加载配置表
+        EnqueueFunction(LoadConfigAsync);
+        
         // On Finshed
         EnqueueFunction(OnPostProcess);
 
         ProcessQueue();
+    }
+
+    /// <summary>
+    /// 异步加载配置表
+    /// </summary>
+    private IEnumerator<float> LoadConfigAsync()
+    {
+        // 确保 ConfigManager 实例存在
+        if (ConfigManager.Instance == null)
+        {
+            Debug.LogError("[LoadManager] ConfigManager instance is null!");
+            yield return 1f;
+            yield break;
+        }
+
+        // 如果已经初始化，直接返回
+        if (ConfigManager.Instance.IsInitialized)
+        {
+            Debug.Log("[LoadManager] Config tables already initialized.");
+            yield return 1f;
+            yield break;
+        }
+
+        bool isLoading = true;
+        bool loadSuccess = false;
+
+        // 启动异步加载
+        ConfigManager.Instance.InitializeAsync(() =>
+        {
+            isLoading = false;
+            loadSuccess = ConfigManager.Instance.IsInitialized;
+        });
+
+        // 等待加载完成，并报告进度
+        while (isLoading)
+        {
+            float progress = ConfigManager.Instance.LoadProgress;
+            yield return progress;
+        }
+
+        // 加载完成
+        if (loadSuccess)
+        {
+            Debug.Log("[LoadManager] Config tables loaded successfully.");
+            yield return 1f;
+        }
+        else
+        {
+            Debug.LogError("[LoadManager] Failed to load config tables!");
+            yield return 1f;
+        }
     }
 
     // 后处理
