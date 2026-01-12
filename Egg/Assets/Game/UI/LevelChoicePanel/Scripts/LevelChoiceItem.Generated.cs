@@ -15,4 +15,9 @@ using TMPro;
         [SerializeField] private TextMeshProUGUI LevelTxt;
         #endregion
 
+        #region Images
+        [SerializeField] private Image PassedImg;
+        [SerializeField] private Image AdImg;
+        [SerializeField] private Image LockImg;
+        #endregion
     }

@@ -1,4 +1,5 @@
 using Bear.EventSystem;
+using Config;
 using UnityEngine;
 
 namespace Game.Events
@@ -73,7 +74,13 @@ namespace Game.Events
         public string NewState => Field1;
     }
 
-    public class NextLevelEvent : EventBase {}
+    /// <summary>
+    /// 进入对应关卡
+    /// </summary>
+    public class EnterLevelEvent : EventBase<LevelData>
+    {
+        public LevelData Data => Field1;
+    }
 
     #endregion 
 

@@ -1,8 +1,7 @@
+using System;
 using System.Collections.Generic;
 using Config;
-using Config.LubanConfig;
 using Game.ConfigModule;
-using UnityEngine;
 
 /// <summary>
 /// 用于处理一些 Level 相关的数据
@@ -35,22 +34,15 @@ public class LevelCtrl
 
     public void Victory()
     {
-        if (!DB.GameData.PassedLevels.Contains(CurrentLevel))
+        if (!IsPassed(CurrentLevel))
         {
             DB.GameData.PassedLevels.Add(CurrentLevel);
+            DB.GameData.MaxLevel = Math.Max(DB.GameData.MaxLevel, CurrentLevel);
+
             DB.GameData.Save();
         }
 
         RefreshLevel();
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns></returns>
-    public bool CanEnterLevel()
-    {
-        return DB.GameData.CurrentLevel > 0;
     }
 
     // 根据 pass 和 unlock 确定当前的 最小 level
@@ -65,12 +57,12 @@ public class LevelCtrl
         for (int i = 0; i < datas.Count; i++)
         {
             data = datas[i];
-            if (gameData.PassedLevels.Contains(data.Id))
+            if (IsPassed(data.Id))
             {
                 continue;
             }
 
-            if (!gameData.UnlockLevels.Contains(data.Id))
+            if (!IsUnlock(data.Id))
             {
                 if (data.LockType == Config.Level.LevelLockType.Unlock)
                 {
@@ -89,6 +81,49 @@ public class LevelCtrl
             }
         }
 
+        DB.GameData.Save();
+    }
+
+    /// <summary>
+    /// 要小于最大关卡数
+    /// </summary>
+    /// <returns></returns>
+    public bool CanEnterLevel(int id)
+    {
+        return DB.GameData.MaxLevel + 1 <= id;
+    }
+
+    /// <summary>
+    /// 是否已解锁
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    public bool IsUnlock(int id)
+    {
+        return DB.GameData.UnlockLevels.Contains(id);
+    }
+
+    /// <summary>
+    /// 是否已通关
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    public bool IsPassed(int id)
+    {
+        return DB.GameData.PassedLevels.Contains(id);
+    }
+
+    
+    /// <summary>
+    /// 解锁关卡
+    /// </summary>
+    /// <param name="id"></param>
+    public void UnlockLevel(int id)
+    {
+        if (IsUnlock(id))
+            return;
+
+        DB.GameData.UnlockLevels.Add(id);
         DB.GameData.Save();
     }
 }

@@ -14,7 +14,7 @@ namespace Game.ConfigModule
             return new string[]
             {
                 "lubanconfig_tbglobalconst",
-                "tblevelconfig"
+                "tbleveldata"
             };
         }
     }

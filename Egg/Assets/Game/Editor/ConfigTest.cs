@@ -248,7 +248,7 @@ namespace Game.Editor
                 for (int i = 0; i < count; i++)
                 {
                     var item = levelConfig.DataList[i];
-                    AddLog($"  [{i}] Id: {item.Id}, Level: {item.Level}, LevelType: {item.LevelType}, LockType: {item.LockType}");
+                    AddLog($"  [{i}] Id: {item.Id}, Level: {item.Path}, LevelType: {item.LevelType}, LockType: {item.LockType}");
                 }
             }
 
@@ -260,7 +260,7 @@ namespace Game.Editor
                 if (itemById != null)
                 {
                     AddLog($"\nGet by ID ({firstId}):");
-                    AddLog($"  Id: {itemById.Id}, Level: {itemById.Level}, LevelType: {itemById.LevelType}, LockType: {itemById.LockType}");
+                    AddLog($"  Id: {itemById.Id}, Level: {itemById.Path}, LevelType: {itemById.LevelType}, LockType: {itemById.LockType}");
                 }
             }
 

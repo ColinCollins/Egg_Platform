@@ -11,6 +11,9 @@ namespace Bear.SaveModule
         // 当前关卡
         [SerializeField] private int currentLevel = 1;
 
+        // 最大通关关卡
+        [SerializeField] private int maxLevel = 1;
+
         // 已解锁关卡
         [SerializeField] private List<int> unlockLevels = new List<int>();
 

@@ -77,6 +77,13 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
         _subscriber.Subscribe<GameSettingEvent>(OnGameSettingEvent);
         _subscriber.Subscribe<GameTipsEvent>(OnGameTipsEvent);
         _subscriber.Subscribe<GameResetEvent>(OnGameResetEvent);
+
+        _subscriber.Subscribe<EnterLevelEvent>(OnGameEnter);
+    }
+
+    private void OnGameEnter(EnterLevelEvent evt)
+    {
+        
     }
 
     private void OnSwitchState(SwitchGameStateEvent evt)

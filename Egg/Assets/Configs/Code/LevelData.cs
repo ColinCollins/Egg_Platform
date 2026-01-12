@@ -18,7 +18,7 @@ public sealed partial class LevelData : Luban.BeanBase
     public LevelData(JSONNode _buf) 
     {
         { if(!_buf["id"].IsNumber) { throw new SerializationException(); }  Id = _buf["id"]; }
-        { if(!_buf["level"].IsNumber) { throw new SerializationException(); }  Level = _buf["level"]; }
+        { if(!_buf["path"].IsString) { throw new SerializationException(); }  Path = _buf["path"]; }
         { if(!_buf["levelType"].IsNumber) { throw new SerializationException(); }  LevelType = (Level.GameType)_buf["levelType"].AsInt; }
         { if(!_buf["lockType"].IsNumber) { throw new SerializationException(); }  LockType = (Level.LevelLockType)_buf["lockType"].AsInt; }
     }
@@ -35,7 +35,7 @@ public sealed partial class LevelData : Luban.BeanBase
     /// <summary>
     /// 关卡索引
     /// </summary>
-    public readonly int Level;
+    public readonly string Path;
     /// <summary>
     /// 关卡类型
     /// </summary>
@@ -56,7 +56,7 @@ public sealed partial class LevelData : Luban.BeanBase
     {
         return "{ "
         + "id:" + Id + ","
-        + "level:" + Level + ","
+        + "path:" + Path + ","
         + "levelType:" + LevelType + ","
         + "lockType:" + LockType + ","
         + "}";
