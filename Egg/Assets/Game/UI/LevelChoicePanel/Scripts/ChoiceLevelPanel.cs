@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using Bear.EventSystem;
 using Bear.UI;
 using Config;
@@ -49,6 +50,8 @@ public partial class ChoiceLevelPanel : BaseUIView, IEventSender
     {
         LastBtn.OnClick += LastPage;
         NextBtn.OnClick += NextPage;
+
+        RefreshBtn();
     }
 
     private void LastPage(CustomButton btn)
@@ -56,12 +59,14 @@ public partial class ChoiceLevelPanel : BaseUIView, IEventSender
         pageIndex = Math.Max(pageIndex - 1, 0);
 
         RefreshBtn();
+        RefreshItems();
     }
     private void NextPage(CustomButton btn)
     {
         int dt = datas.Count % MaxCount > 0 ? 1 : 0;
         pageIndex = Math.Min(pageIndex + 1, datas.Count / MaxCount + dt);
         RefreshBtn();
+        RefreshItems();
     }
 
     private void RefreshBtn()
@@ -75,10 +80,12 @@ public partial class ChoiceLevelPanel : BaseUIView, IEventSender
         if (_itemCache.Count <= 0)
             return;
 
+        int index = -1;
+        LevelData data = null;
         for (int i = 0; i < _itemCache.Count; i++)
         {
-            var item = Instantiate(itemPrefab, Content);
-            _itemCache.Add(item);
+            index = pageIndex * MaxCount + i;
+            _itemCache[i].SetData(index >= datas.Count ? null : datas[index]);
         }
     }
 
