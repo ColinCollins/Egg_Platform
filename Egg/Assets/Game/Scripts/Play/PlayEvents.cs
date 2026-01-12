@@ -82,6 +82,11 @@ namespace Game.Events
         public LevelData Data => Field1;
     }
 
+    public class EnterNextLevelEvent : EventBase
+    {
+        
+    }
+
     #endregion 
 
     #region UI

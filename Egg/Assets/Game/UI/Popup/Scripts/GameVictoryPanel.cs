@@ -12,7 +12,7 @@ public partial class GameVictoryPanel : BaseUIView, IEventSender
 
     private void OnNextLevel(CustomButton btn)
     {
-        this.DispatchEvent(Witness<GameResetEvent>._);
+        this.DispatchEvent(Witness<EnterNextLevelEvent>._);
         UIManager.Instance.CloseUI(this);
     }
 

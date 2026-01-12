@@ -51,9 +51,10 @@ public class LevelCtrl
         {
             DB.GameData.PassedLevels.Add(CurrentLevel);
             DB.GameData.MaxLevel = Math.Max(DB.GameData.MaxLevel, CurrentLevel);
-
-            DB.GameData.Save();
         }
+
+        DB.GameData.CurrentLevel++;
+        DB.GameData.Save();
 
         RefreshLevel();
     }
@@ -65,7 +66,6 @@ public class LevelCtrl
         // _currentLevel = 1
         LevelData data = null;
         var gameData = DB.GameData;
-        // gameData.CurrentLevel = -1;
 
         for (int i = 0; i < datas.Count; i++)
         {
@@ -122,7 +122,7 @@ public class LevelCtrl
         return DB.GameData.PassedLevels.Contains(id);
     }
 
-    
+
     /// <summary>
     /// 解锁关卡
     /// </summary>

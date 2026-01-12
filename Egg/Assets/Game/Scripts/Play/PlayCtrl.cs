@@ -33,7 +33,7 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
 
     public EventSubscriber Subscriber => _subscriber;
 
-#region Level
+    #region Level
     private LevelCtrl _level;
 
     public LevelCtrl Level => _level;
@@ -49,7 +49,7 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
     public BaseLevelCtrl LevelCtrl;
     public BaseLevelCtrl LevelPrefab;
     private const string LevelPath = "Level/{0}";
-#endregion 
+    #endregion
 
 
     public void Init()
@@ -79,12 +79,20 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
         _subscriber.Subscribe<GameResetEvent>(OnGameResetEvent);
 
         _subscriber.Subscribe<EnterLevelEvent>(OnGameEnter);
+        _subscriber.Subscribe<EnterNextLevelEvent>(OnEnterNextLevel);
     }
 
     private void OnGameEnter(EnterLevelEvent evt)
     {
         CreateLevel(evt.Data.Path);
-         _machine.Enter(GamePlayStateName.PLAYING);
+        _machine.Enter(GamePlayStateName.PLAYING);
+    }
+
+    private void OnEnterNextLevel(EnterNextLevelEvent evt)
+    {
+        DestroyLevel();
+        CreateLevel(Level.CurrentLevelData.Path);
+        _machine.Enter(GamePlayStateName.PLAYING);
     }
 
     private void OnSwitchState(SwitchGameStateEvent evt)

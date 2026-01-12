@@ -23,6 +23,7 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     [SerializeField] private float GroundCheckDistance;
     [SerializeField] private float WallCheckDistance;
     [SerializeField] private LayerMask whatIsGround;
+        [SerializeField] private LayerMask whatIsWall;
 
 
     #region Temp
@@ -161,12 +162,12 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     private void HandleCollision()
     {
         isGrounded = Physics2D.Raycast(transform.position, Vector2.down, GroundCheckDistance, whatIsGround);
-        isWallDetected = Physics2D.Raycast(transform.position, Vector2.right * facingDir, WallCheckDistance, whatIsGround);
+        isWallDetected = Physics2D.Raycast(transform.position, Vector2.right * facingDir, WallCheckDistance, whatIsWall);
     }
 
     private void HandleAnimators()
     {
-        // this.Log(xInput.ToString());
+        this.Log(xInput.ToString());
         anim.SetFloat("xVelocity", xInput);
         anim.SetFloat("yVelocity", rb.linearVelocityY);
         anim.SetBool("isGrounded", isGrounded);

@@ -73,12 +73,14 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
     {
         this.Log("Right Up");
         isRightDown = false;
+        this.DispatchEvent(Witness<PlayerMoveCancelEvent>._);
     }
 
     private void OnClickUpLeft(CustomButton btn)
     {
         this.Log("Left Up");
         isLeftDown = false;
+        this.DispatchEvent(Witness<PlayerMoveCancelEvent>._);
     }
 
     private void OnClickJump(CustomButton btn)
@@ -99,8 +101,8 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
             this.DispatchEvent(Witness<PlayerRightMoveEvent>._);
         else if (isLeftDown)
             this.DispatchEvent(Witness<PlayerLeftMoveEvent>._);
-        else
-            this.DispatchEvent(Witness<PlayerMoveCancelEvent>._);
+/*         else
+            this.DispatchEvent(Witness<PlayerMoveCancelEvent>._); */
     }
 
     private void OnClickReset(CustomButton btn)
@@ -138,6 +140,11 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
     {
         base.OnClose();
         EventsUtils.ResetEvents(ref _subscriber);
+    }
+
+    public void SetData(int level)
+    {
+        LevelTxt.text = level.ToString();
     }
 
     public static GamePlayPanel Create()

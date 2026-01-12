@@ -26,6 +26,8 @@ namespace Game.Play
 
             if (owner.GamePlayPanel == null)
                 owner.GamePlayPanel = GamePlayPanel.Create();
+
+            owner.GamePlayPanel.SetData(owner.Level.CurrentLevel);
             // 测试用关卡
             // owner.CreateLevel(owner.Level.CurrentLevel.ToString("000"));
         }
