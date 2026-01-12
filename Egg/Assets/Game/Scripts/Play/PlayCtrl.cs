@@ -48,7 +48,7 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
     public Transform SceneRoot;
     public BaseLevelCtrl LevelCtrl;
     public BaseLevelCtrl LevelPrefab;
-    private const string LevelPath = "Level/Level_{0}";
+    private const string LevelPath = "Level/{0}";
 #endregion 
 
 
@@ -83,7 +83,8 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
 
     private void OnGameEnter(EnterLevelEvent evt)
     {
-        
+        CreateLevel(evt.Data.Path);
+         _machine.Enter(GamePlayStateName.PLAYING);
     }
 
     private void OnSwitchState(SwitchGameStateEvent evt)
@@ -97,7 +98,6 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
         this.Log("show Settings");
         _machine.Enter(GamePlayStateName.PAUSE);
         GameSettingPopup.Create();
-
     }
 
     private void OnGameTipsEvent(GameTipsEvent evt)
@@ -111,7 +111,7 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
     {
         // Show Ask 
         DestroyLevel();
-        CreateLevel(Level.CurrentLevel.ToString("000"));
+        CreateLevel(Level.CurrentLevelData.Path);
         _machine.Enter(GamePlayStateName.PLAYING);
         this.DispatchEvent(Witness<GameResumeEvent>._);
     }
@@ -129,17 +129,20 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
         LevelPrefab = null;
     }
 
-    public void CreateLevel(string levelId)
+    public void CreateLevel(string levelName)
     {
         if (LevelCtrl != null)
             return;
 
         // id, 测试关卡
         if (!LevelPrefab)
-            LevelPrefab = Resources.Load<BaseLevelCtrl>(string.Format(LevelPath, levelId));
+            LevelPrefab = Resources.Load<BaseLevelCtrl>(string.Format(LevelPath, levelName));
 
         if (!LevelPrefab)
+        {
+            this.LogError($"Level lost: {levelName}");
             return;
+        }
 
         LevelCtrl = GameObject.Instantiate(LevelPrefab, SceneRoot);
     }

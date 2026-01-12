@@ -9,18 +9,14 @@ namespace Bear.SaveModule
     public partial class GameData
     {
         /// <summary>
-        /// 静态 ScriptableObject 实例（编辑器资源）
+        /// 初始化数据（设置默认值）
         /// </summary>
-        public static GameData Instance
+        public override void Init()
         {
-            get
-            {
-#if UNITY_EDITOR
-                return AssetDatabase.LoadAssetAtPath<GameData>("Assets/Game/DB/GameData.asset");
-#else
-                return Resources.Load<GameData>("GameData");
-#endif
-            }
+            currentLevel = 1;
+            maxLevel = 1;
+            unlockLevels = new List<int>();
+            passedLevels = new List<int>();
         }
 
         public int CurrentLevel

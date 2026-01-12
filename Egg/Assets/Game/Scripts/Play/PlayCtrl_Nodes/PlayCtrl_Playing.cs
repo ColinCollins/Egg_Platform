@@ -15,7 +15,6 @@ namespace Game.Play
     {
         private PlayCtrl owner;
 
-
         public override void OnEnter()
         {
             Debug.Log($"{nameof(PlayCtrl_Playing)} Enter");
@@ -25,9 +24,10 @@ namespace Game.Play
             if (owner.SceneRoot == null)
                 owner.SceneRoot = GameObject.Find("Scene").transform;
 
-            owner.GamePlayPanel = GamePlayPanel.Create();
+            if (owner.GamePlayPanel == null)
+                owner.GamePlayPanel = GamePlayPanel.Create();
             // 测试用关卡
-            owner.CreateLevel(owner.Level.CurrentLevel.ToString("000"));
+            // owner.CreateLevel(owner.Level.CurrentLevel.ToString("000"));
         }
 
         public override void OnExecute()

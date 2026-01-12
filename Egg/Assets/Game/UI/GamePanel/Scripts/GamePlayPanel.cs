@@ -25,16 +25,8 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
     public override void OnOpen()
     {
         base.OnOpen();
-        ResetBtn.OnClick += OnClickReset;
-        PauseBtn.OnClick += OnClickSetting;
-        TipsBtn.OnClick += OnClickTips;
 
-        JumpBtn.OnClickDown += OnClickJump;
-        RightMoveBtn.OnClickDown += OnClickDownRight;
-        LeftMoveBtn.OnClickDown += OnClickDownLeft;
-
-        RightMoveBtn.OnClickUp += OnClickUpRight;
-        LeftMoveBtn.OnClickUp += OnClickUpLeft;
+        InitBtns();
 
         isPause = false;
         isRightDown = false;
@@ -48,6 +40,21 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
         EventsUtils.ResetEvents(ref _subscriber);
         _subscriber.Subscribe<GameResumeEvent>(OnGamePanelResume);
         _subscriber.Subscribe<SwitchGameStateEvent>(OnGameStateChanged);
+    }
+
+#region Buttons
+    private void InitBtns()
+    {
+        ResetBtn.OnClick += OnClickReset;
+        PauseBtn.OnClick += OnClickSetting;
+        TipsBtn.OnClick += OnClickTips;
+
+        JumpBtn.OnClickDown += OnClickJump;
+        RightMoveBtn.OnClickDown += OnClickDownRight;
+        LeftMoveBtn.OnClickDown += OnClickDownLeft;
+
+        RightMoveBtn.OnClickUp += OnClickUpRight;
+        LeftMoveBtn.OnClickUp += OnClickUpLeft;
     }
 
     private void OnClickDownRight(CustomButton btn)
@@ -82,7 +89,7 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
         this.Log("Jump");
         this.DispatchEvent(Witness<PlayerJumpEvent>._);
     }
-
+#endregion 
     void Update()
     {
         if (isPause)
@@ -92,7 +99,7 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
             this.DispatchEvent(Witness<PlayerRightMoveEvent>._);
         else if (isLeftDown)
             this.DispatchEvent(Witness<PlayerLeftMoveEvent>._);
-        else 
+        else
             this.DispatchEvent(Witness<PlayerMoveCancelEvent>._);
     }
 

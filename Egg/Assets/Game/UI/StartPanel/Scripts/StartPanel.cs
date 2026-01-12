@@ -14,9 +14,13 @@ public partial class StartPanel : BaseUIView, IDebuger, IEventSender
         PlayBtn.OnClick += OnClickPlay;
     }
 
+    /// <summary>
+    /// 直接进入游戏
+    /// </summary>
+    /// <param name="btn"></param>
     private void OnClickPlay(CustomButton btn)
-    {
-        this.DispatchEvent(Witness<SwitchGameStateEvent>._, GamePlayStateName.PLAYING);
+    {   
+        this.DispatchEvent(Witness<EnterLevelEvent>._, PlayCtrl.Instance.Level.CurrentLevelData);
         // this.Log("Play Game");
         UIManager.Instance.CloseUI(this);
     }

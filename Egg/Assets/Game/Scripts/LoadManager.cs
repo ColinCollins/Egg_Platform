@@ -92,7 +92,7 @@ public class LoadManager : MonoBehaviour
     private void InitUIManager()
     {
         UIManager.Instance.Initialize();
-        ResourcesUILoader newLoader = new ResourcesUILoader("./");
+        ResourcesUILoader newLoader = new ResourcesUILoader("");
         UIManager.Instance.RegisterLoader(newLoader, 5);
     }
 

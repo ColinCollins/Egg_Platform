@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using Config;
 using Game.ConfigModule;
+using Unity.Android.Gradle.Manifest;
 
 /// <summary>
 /// 用于处理一些 Level 相关的数据
@@ -17,6 +19,17 @@ public class LevelCtrl
         get
         {
             return DB.GameData.CurrentLevel;
+        }
+    }
+
+    /// <summary>
+    /// 当前关卡 Id
+    /// </summary>
+    public LevelData CurrentLevelData
+    {
+        get
+        {
+            return datas.Find(d => d.Id == CurrentLevel);
         }
     }
 
@@ -52,7 +65,7 @@ public class LevelCtrl
         // _currentLevel = 1
         LevelData data = null;
         var gameData = DB.GameData;
-        gameData.CurrentLevel = -1;
+        // gameData.CurrentLevel = -1;
 
         for (int i = 0; i < datas.Count; i++)
         {
@@ -65,13 +78,9 @@ public class LevelCtrl
             if (!IsUnlock(data.Id))
             {
                 if (data.LockType == Config.Level.LevelLockType.Unlock)
-                {
                     gameData.UnlockLevels.Add(data.Id);
-                }
                 else
-                {
                     continue;
-                }
             }
 
             // 查询最低 Id 关卡
