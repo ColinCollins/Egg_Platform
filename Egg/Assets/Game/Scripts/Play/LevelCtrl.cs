@@ -99,7 +99,7 @@ public class LevelCtrl
     /// <returns></returns>
     public bool CanEnterLevel(int id)
     {
-        return DB.GameData.MaxLevel + 1 <= id;
+        return DB.GameData.MaxLevel + 1 >= id;
     }
 
     /// <summary>
@@ -133,6 +133,12 @@ public class LevelCtrl
             return;
 
         DB.GameData.UnlockLevels.Add(id);
+        DB.GameData.Save();
+    }
+
+    public void SetCurrentLevel(int id)
+    {
+        DB.GameData.CurrentLevel = id;
         DB.GameData.Save();
     }
 }

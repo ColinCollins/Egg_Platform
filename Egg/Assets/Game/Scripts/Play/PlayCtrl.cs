@@ -85,14 +85,24 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
     private void OnGameEnter(EnterLevelEvent evt)
     {
         CreateLevel(evt.Data.Path);
+        Level.SetCurrentLevel(evt.Data.Id);
         _machine.Enter(GamePlayStateName.PLAYING);
     }
 
     private void OnEnterNextLevel(EnterNextLevelEvent evt)
     {
         DestroyLevel();
-        CreateLevel(Level.CurrentLevelData.Path);
-        _machine.Enter(GamePlayStateName.PLAYING);
+        var data = Level.CurrentLevelData;
+        if (data == null)
+        {
+            // switch panel
+            ChoiceLevelPanel.Create();
+        }
+        else
+        {
+            CreateLevel(data.Path);
+            _machine.Enter(GamePlayStateName.PLAYING);
+        }
     }
 
     private void OnSwitchState(SwitchGameStateEvent evt)

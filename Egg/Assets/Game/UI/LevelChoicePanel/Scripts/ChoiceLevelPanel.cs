@@ -71,8 +71,8 @@ public partial class ChoiceLevelPanel : BaseUIView, IEventSender
 
     private void RefreshBtn()
     {
-        LastBtn.gameObject.SetActive(pageIndex <= 0);
-        NextBtn.gameObject.SetActive(pageIndex * MaxCount >= datas.Count);
+        LastBtn.gameObject.SetActive(pageIndex > 0);
+        NextBtn.gameObject.SetActive(pageIndex * MaxCount < datas.Count);
     }
 
     private void RefreshItems()
@@ -81,7 +81,7 @@ public partial class ChoiceLevelPanel : BaseUIView, IEventSender
             return;
 
         int index = -1;
-        LevelData data = null;
+        // LevelData data = null;
         for (int i = 0; i < _itemCache.Count; i++)
         {
             index = pageIndex * MaxCount + i;
@@ -92,6 +92,7 @@ public partial class ChoiceLevelPanel : BaseUIView, IEventSender
     public void EnterLevel(LevelData data)
     {
         this.DispatchEvent(Witness<Game.Events.EnterLevelEvent>._, data);
+        UIManager.Instance.CloseUI(this);
     }
 
     public static ChoiceLevelPanel Create()

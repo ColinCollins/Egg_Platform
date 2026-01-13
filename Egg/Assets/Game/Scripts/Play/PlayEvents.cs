@@ -94,5 +94,6 @@ namespace Game.Events
     // gamepanel pause 状态恢复事件
     public class GameResumeEvent : EventBase {}
 
-    #endregion 
+    #endregion
+    
 }

@@ -59,7 +59,6 @@ public partial class LevelChoiceItem : MonoBehaviour, IAutoUIBind
 
     private void RefreshState()
     {
-
         bool isPassed = false;
         bool isUnlock = PlayCtrl.Instance.Level.CanEnterLevel(_levelData.Id);
 
@@ -86,6 +85,8 @@ public partial class LevelChoiceItem : MonoBehaviour, IAutoUIBind
         AdImg.gameObject.SetActive(_state == State.AdLock);
         PassedImg.gameObject.SetActive(_state == State.Passed);
         LockImg.gameObject.SetActive(_state == State.AdLock || _state == State.LevelLock);
+
+        LevelTxt.text = _levelData.Id.ToString();
     }
 
     private void ShowRewardAd(CustomButton btn)
