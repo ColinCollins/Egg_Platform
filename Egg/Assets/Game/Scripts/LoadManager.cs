@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Bear.SaveModule;
 using Bear.UI;
 using DG.Tweening;
+using Game.Common;
 using Game.ConfigModule;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -85,6 +86,8 @@ public class LoadManager : MonoBehaviour
         DBManager.Instance.Initialize();
 
         InitUIManager();
+
+        ObjectPoolManager.Instance.RegisterPool<SystemTips>(SystemTips.Create, 2, 5);
         
         yield return 1;
     }

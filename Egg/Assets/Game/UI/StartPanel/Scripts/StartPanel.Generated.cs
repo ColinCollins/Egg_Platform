@@ -10,6 +10,8 @@ using TMPro;
         #region Buttons
         [SerializeField] private CustomButton PlayBtn;
         [SerializeField] private CustomButton ChoiceLevelBtn;
+        [SerializeField] private CustomButton SettingBtn;
+        [SerializeField] private CustomButton TestBtn;
         #endregion
 
     }

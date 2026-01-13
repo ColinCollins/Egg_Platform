@@ -11,6 +11,8 @@ public partial class StartPanel : BaseUIView, IDebuger, IEventSender
         base.OnOpen();
         PlayBtn.OnClick += OnClickPlay;
         ChoiceLevelBtn.OnClick += OnShowChoiceLevel;
+
+        TestBtn.OnClick += TestTips;
     }
 
     /// <summary>
@@ -27,6 +29,11 @@ public partial class StartPanel : BaseUIView, IDebuger, IEventSender
     private void OnShowChoiceLevel(CustomButton btn)
     {
         ChoiceLevelPanel.Create();
+    }
+
+    private void TestTips(CustomButton btn)
+    {
+        SystemTips.Show(transform.parent, "test - luoweiming");
     }
 
     public static StartPanel Create()
