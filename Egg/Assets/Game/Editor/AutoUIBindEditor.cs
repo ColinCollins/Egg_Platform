@@ -83,7 +83,7 @@ namespace Game.Editor
 
             if (components.Count == 0)
             {
-                EditorUtility.DisplayDialog("No Components Found", "未找到符合条件的子对象。\n\n需要：\n- 名称包含 _btn 并绑定 CustomButton\n- 名称包含 _txt 并绑定 TextMeshProUGUI\n- 名称包含 _img 并绑定 Image", "OK");
+                EditorUtility.DisplayDialog("No Components Found", "未找到符合条件的子对象。\n\n需要：\n- 名称包含 _btn 并绑定 CustomButton\n- 名称包含 _txt 并绑定 TextMeshProUGUI\n- 名称包含 _img 并绑定 Image\n- 名称包含 _toggle 并绑定 Toggle", "OK");
                 return;
             }
 
@@ -162,6 +162,9 @@ namespace Game.Editor
                         break;
                     case "Image":
                         component = foundObject.GetComponent<Image>();
+                        break;
+                    case "Toggle":
+                        component = foundObject.GetComponent<Toggle>();
                         break;
                 }
                 
@@ -280,6 +283,21 @@ namespace Game.Editor
                         });
                     }
                 }
+
+                // 检查 _toggle 后缀 + Toggle
+                if (objectName.Contains("_toggle"))
+                {
+                    Toggle toggle = obj.GetComponent<Toggle>();
+                    if (toggle != null)
+                    {
+                        components.Add(new UIComponentInfo
+                        {
+                            Name = objectName,
+                            Type = "Toggle",
+                            FieldName = GetFieldName(objectName)
+                        });
+                    }
+                }
             }
 
             return components;
@@ -306,6 +324,11 @@ namespace Game.Editor
             {
                 suffix = "Img";
                 fieldName = fieldName.Replace("_img", "");
+            }
+            else if (fieldName.Contains("_toggle"))
+            {
+                suffix = "Toggle";
+                fieldName = fieldName.Replace("_toggle", "");
             }
             
             // 移除下划线并转换为驼峰命名
@@ -366,6 +389,7 @@ namespace Game.Editor
             var buttons = components.Where(c => c.Type == "CustomButton").ToList();
             var texts = components.Where(c => c.Type == "TextMeshProUGUI").ToList();
             var images = components.Where(c => c.Type == "Image").ToList();
+            var toggles = components.Where(c => c.Type == "Toggle").ToList();
 
             // 生成按钮字段
             if (buttons.Count > 0)
@@ -398,6 +422,18 @@ namespace Game.Editor
                 foreach (var img in images)
                 {
                     code.AppendLine($"        [SerializeField] private Image {img.FieldName};");
+                }
+                code.AppendLine("        #endregion");
+                code.AppendLine();
+            }
+
+            // 生成 Toggle 字段
+            if (toggles.Count > 0)
+            {
+                code.AppendLine("        #region Toggles");
+                foreach (var toggle in toggles)
+                {
+                    code.AppendLine($"        [SerializeField] private Toggle {toggle.FieldName};");
                 }
                 code.AppendLine("        #endregion");
             }

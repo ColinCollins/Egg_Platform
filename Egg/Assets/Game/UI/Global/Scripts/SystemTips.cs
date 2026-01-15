@@ -19,6 +19,8 @@ public class SystemTips : MonoBehaviour, IRecycle, IDebuger
 
     [SerializeField] private TextMeshProUGUI Content;
 
+    bool isSpawn = false;
+
     public static SystemTips Create()
     {
         var prefab = Resources.Load<SystemTips>("SystemTips");
@@ -75,12 +77,13 @@ public class SystemTips : MonoBehaviour, IRecycle, IDebuger
 
     public void OnRecycle()
     {
+        isSpawn = false;
         this.Log("Recycle back");
     }
 
     public void OnSpawn()
     {
-
+        isSpawn = true;
     }
 
     private void OnDestroy()
@@ -89,7 +92,10 @@ public class SystemTips : MonoBehaviour, IRecycle, IDebuger
     }
     private void OnComplete()
     {
+        if (this == null || !isSpawn)
+            return;
         ObjectPoolManager.Instance.Recycle<SystemTips>(this);
+
         if (sq != null)
         {
             sq.Kill();

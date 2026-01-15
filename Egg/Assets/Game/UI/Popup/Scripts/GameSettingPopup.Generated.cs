@@ -8,7 +8,12 @@ using TMPro;
     public partial class GameSettingPopup
     {
         #region Buttons
-        [SerializeField] private CustomButton MakesureBtn;
+        [SerializeField] private CustomButton CloseBtn;
+        [SerializeField] private CustomButton ExitBtn;
+        #endregion
+
+        #region Texts
+        [SerializeField] private TextMeshProUGUI TitleTxt;
         #endregion
 
     }

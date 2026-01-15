@@ -16,7 +16,7 @@ namespace Game.Level
         // [SerializeField] private LayerMask SuccessLayer;
         [SerializeField] private LayerMask FailLayer;
         // Success
-        [SerializeField] private OnTrigger2DHandle onTrigger2DHandle;
+        // [SerializeField] private OnTrigger2DHandle onTrigger2DHandle;
 
         [SerializeField] private ActorCtrl actor;
         public ActorCtrl Actor => actor;
@@ -28,7 +28,7 @@ namespace Game.Level
         private bool isMovingRight = false;
         private bool isMovingLeft = false;
 
-        private bool isActorEnterDoor = false;
+        public bool IsActorEnterDoor { get; set; }
 
         protected bool isPause = false;
         protected bool isFinished = false;
@@ -67,7 +67,6 @@ namespace Game.Level
         protected void OnGamePause(GamePauseEvent evt)
         {
             isPause = true;
-            onTrigger2DHandle.OnEnter -= OnActorTrigger2D;
         }
         protected void OnGameResume(GameResumeEvent evt)
         {
@@ -77,7 +76,6 @@ namespace Game.Level
         private void GameResume()
         {
             isPause = false;
-            onTrigger2DHandle.OnEnter += OnActorTrigger2D;
         }
 
         #region Movement
@@ -155,20 +153,15 @@ namespace Game.Level
             Actor.OnUpdate();
         }
 
-        private void OnActorTrigger2D(Collider2D collider)
+#region Success  or Failed
+        public void OnActorTrigger2D(Collider2D collider)
         {
-            if (collider.gameObject.tag.Equals("Player"))
-            {
-                isActorEnterDoor = true;
-                return;
-            }
-
-            isActorEnterDoor = false;
+            IsActorEnterDoor = true;
         }
 
         public virtual bool IsSuccess()
         {
-            return isActorEnterDoor;
+            return IsActorEnterDoor;
         }
 
         public virtual bool IsFail()
@@ -198,6 +191,7 @@ namespace Game.Level
             }
         }
 
+#endregion
 
         /// <summary>
         /// 销毁关卡时清理

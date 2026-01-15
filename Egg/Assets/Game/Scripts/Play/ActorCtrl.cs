@@ -167,7 +167,7 @@ public class ActorCtrl : MonoBehaviour, IDebuger
 
     private void HandleAnimators()
     {
-        this.Log(xInput.ToString());
+        // this.Log(xInput.ToString());
         anim.SetFloat("xVelocity", xInput);
         anim.SetFloat("yVelocity", rb.linearVelocityY);
         anim.SetBool("isGrounded", isGrounded);

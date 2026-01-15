@@ -30,6 +30,8 @@ namespace Game.Play
             owner.GamePlayPanel.SetData(owner.Level.CurrentLevel);
             // 测试用关卡
             // owner.CreateLevel(owner.Level.CurrentLevel.ToString("000"));
+
+            GameManager.Instance.AssisCamera.enabled = false;
         }
 
         public override void OnExecute()

@@ -17,6 +17,7 @@ namespace Game.Play
 
             // 创建主界面
             startPanel = StartPanel.Create();
+            GameManager.Instance.AssisCamera.enabled = true;
         }
 
         public override void OnExecute()

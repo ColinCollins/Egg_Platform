@@ -8,6 +8,7 @@ using UnityEngine;
 
 public class GameManager : MonoSingleton<GameManager>, IDebuger
 {
+    public Camera AssisCamera;
     // Start is called before the first frame update
     private void Awake()
     {

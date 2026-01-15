@@ -9,12 +9,20 @@ public partial class GameSettingPopup : BaseUIView, IEventSender
 {
     public override void OnOpen()
     {
-        MakesureBtn.OnClick += Close;
+        CloseBtn.OnClick += Close;
+        ExitBtn.OnClick += ExitLevel;
     }
 
     private void Close(CustomButton btn)
     {
         this.DispatchEvent(Witness<SwitchGameStateEvent>._, GamePlayStateName.PLAYING);
+        UIManager.Instance.CloseUI(this);
+    }
+
+    private void ExitLevel(CustomButton btn)
+    {
+        // this.DispatchEvent(Witness<SwitchGameStateEvent>._, GamePlayStateName.START);
+        ChoiceLevelPanel.Create();
         UIManager.Instance.CloseUI(this);
     }
 
