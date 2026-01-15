@@ -21,6 +21,13 @@ namespace Game.Level
         [SerializeField] private ActorCtrl actor;
         public ActorCtrl Actor => actor;
 
+        /// <summary>
+        /// 每个 Level 专门配置不同的 gamepanel
+        /// </summary>
+        [SerializeField] private string gamePlayPanelName = "GamePlayPanel_000";
+
+        public string GamePlayPanelName => gamePlayPanelName;
+
         // 事件订阅器
         private EventSubscriber _subscriber;
 

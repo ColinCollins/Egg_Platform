@@ -12,7 +12,7 @@ namespace Game.ItemEvent
         private EventSubscriber _subscriber;
 
         public EventSubscriber Subscriber => _subscriber;
-
+        
         [SerializeField] private int Id;
 
         void Awake()

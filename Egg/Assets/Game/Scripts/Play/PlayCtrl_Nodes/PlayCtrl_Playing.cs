@@ -24,10 +24,10 @@ namespace Game.Play
             if (owner.SceneRoot == null)
                 owner.SceneRoot = GameObject.Find("Scene").transform;
 
-            if (owner.GamePlayPanel == null)
+/*             if (owner.GamePlayPanel == null)
                 owner.GamePlayPanel = GamePlayPanel.Create();
 
-            owner.GamePlayPanel.SetData(owner.Level.CurrentLevel);
+            owner.GamePlayPanel.SetData(owner.Level.CurrentLevel); */
             // 测试用关卡
             // owner.CreateLevel(owner.Level.CurrentLevel.ToString("000"));
 

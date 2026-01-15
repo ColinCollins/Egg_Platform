@@ -147,9 +147,12 @@ public partial class GamePlayPanel : BaseUIView, IDebuger, IEventSender
         LevelTxt.text = level.ToString();
     }
 
-    public static GamePlayPanel Create()
-    {
-        var panel = UIManager.Instance.OpenUI<GamePlayPanel>($"{typeof(GamePlayPanel).Name}", UILayer.Normal);
+    public static GamePlayPanel Create(string panelName = "")
+    {   
+        if (string.IsNullOrEmpty(panelName))
+            panelName = $"{typeof(GamePlayPanel).Name}";
+
+        var panel = UIManager.Instance.OpenUI<GamePlayPanel>(panelName, UILayer.Normal);
         return panel;
     }
 }

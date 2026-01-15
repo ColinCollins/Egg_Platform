@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Bear.EventSystem;
 using Bear.Fsm;
 using Bear.Logger;
+using Bear.UI;
 using Game.Common;
 using Game.Events;
 using Game.Level;
@@ -38,11 +39,10 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
 
     public LevelCtrl Level => _level;
 
-    private GamePlayPanel gamePlayPanel;
-    public GamePlayPanel @GamePlayPanel
+    public GamePlayPanel @CurrentGamePlayPanel
     {
-        set => gamePlayPanel = value;
-        get => gamePlayPanel;
+        private set;
+        get;
     }
 
     public Transform SceneRoot;
@@ -163,6 +163,20 @@ public class PlayCtrl : Singleton<PlayCtrl>, IBearMachineOwner, IDebuger, IEvent
         }
 
         LevelCtrl = GameObject.Instantiate(LevelPrefab, SceneRoot);
+        RefreshGamePanel();
+    }
+
+    /// <summary>
+    /// 因为需求会有多种不同的 gamePanel，所以我们需要针对变化，设置变体
+    /// </summary>
+    private void RefreshGamePanel()
+    {
+        if (CurrentGamePlayPanel != null)
+        {
+            UIManager.Instance.CloseUI(CurrentGamePlayPanel);
+        }
+
+        CurrentGamePlayPanel = GamePlayPanel.Create(LevelCtrl.GamePlayPanelName);
     }
 
     private void Update()
