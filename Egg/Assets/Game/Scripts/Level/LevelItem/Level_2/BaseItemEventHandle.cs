@@ -10,5 +10,11 @@ namespace Game.ItemEvent
         public bool IsDone { get; protected set; }
 
         public abstract void Execute();
+
+        public virtual void ResetState()
+        {
+            IsRunning = false;
+            IsDone = false;
+        }
     }
 }

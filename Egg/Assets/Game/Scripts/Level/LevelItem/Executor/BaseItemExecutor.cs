@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 namespace Game.ItemEvent
 {
     public enum ExecuteMode
@@ -22,10 +21,15 @@ namespace Game.ItemEvent
 
         private int index = 0;
         private bool isRunning = false;
+        private List<BaseItemEventHandle> runtimeItems = new List<BaseItemEventHandle>();
 
         public virtual void Execute()
         {
             if (items.Count <= 0 || isRunning)
+                return;
+
+            BuildRuntimeItems();
+            if (runtimeItems.Count <= 0)
                 return;
 
             index = 0;
@@ -39,22 +43,37 @@ namespace Game.ItemEvent
 
         protected virtual void OnUpdate()
         {
-            if (!isRunning || index >= items.Count)
+            if (!isRunning || index >= runtimeItems.Count)
             {
                 isRunning = false;
                 return;
             }
 
             // 同步执行直接过
-            if (items[index].IsDone || Mode == ExecuteMode.Parallel)
+            if (runtimeItems[index].IsDone || Mode == ExecuteMode.Parallel)
             {
                 index++;
             }
-            else if (items[index].IsRunning)
+            else if (runtimeItems[index].IsRunning)
                 return;
 
-            if (index < items.Count)
-                items[index].Execute();
+            if (index < runtimeItems.Count)
+                runtimeItems[index].Execute();
+        }
+
+        private void BuildRuntimeItems()
+        {
+            runtimeItems.Clear();
+            runtimeItems = new List<BaseItemEventHandle>(items.Count);
+
+            foreach (var item in items)
+            {
+                if (item == null)
+                    continue;
+
+                item.ResetState();
+                runtimeItems.Add(item);
+            }
         }
     }
 }

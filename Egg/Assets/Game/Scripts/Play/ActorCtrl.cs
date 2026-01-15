@@ -23,7 +23,10 @@ public class ActorCtrl : MonoBehaviour, IDebuger
     [SerializeField] private float GroundCheckDistance;
     [SerializeField] private float WallCheckDistance;
     [SerializeField] private LayerMask whatIsGround;
-        [SerializeField] private LayerMask whatIsWall;
+    [SerializeField] private LayerMask whatIsWall;
+
+    [Header("Jump Feature")]
+    [SerializeField] private bool OpenDoubleJump;
 
 
     #region Temp
@@ -212,7 +215,7 @@ public class ActorCtrl : MonoBehaviour, IDebuger
         {
             Jump();
         }
-        else if (canDoubleJump)
+        else if (canDoubleJump && OpenDoubleJump)
         {
             DoubleJump();
         }
