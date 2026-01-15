@@ -9,19 +9,6 @@ using Game.Level;
 using Game.Play;
 using UnityEngine;
 
-/* public enum GamePlayState
-{
-    // 默认。没什么功能设计
-    Start = 0,
-    // 开始游戏
-    Playing, 
-    // 暂停游戏
-    Pause,
-    // 游戏成功
-    Success,
-    // 游戏失败
-    Failed
-} */
 
 /// <summary>
 /// 

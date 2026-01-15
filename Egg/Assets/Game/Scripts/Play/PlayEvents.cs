@@ -115,6 +115,11 @@ namespace Game.Events
         public bool isOn => Field1;
     }
 
+    public class SwitchObjActiveEvent : EventBase<bool>
+    {
+        public bool isShow => Field1;
+    }
+
     #endregion
 
 }

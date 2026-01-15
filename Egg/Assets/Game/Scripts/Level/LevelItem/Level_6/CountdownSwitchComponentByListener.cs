@@ -1,15 +1,12 @@
 using System.Threading.Tasks;
 using Bear.Logger;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Game.ItemEvent
 {
-    public class CountdownSwitchObjectByListener : BaseItemEventHandle, IDebuger
+    public class CountdownSwitchComponentByListener : BaseItemEventHandle, IDebuger
     {
-        [SerializeField] private GameObject target;
-
-        [SerializeField] private GameObject newObj;
+        [SerializeField] private MonoBehaviour target;
 
         // 执行次数
         [SerializeField] private int Countdown;
@@ -26,8 +23,7 @@ namespace Game.ItemEvent
             currentCount++;
             if (currentCount >= Countdown)
             {
-                target.SetActive(false);
-                newObj.SetActive(true);
+                target.enabled = !target.enabled;
             }
 
             this.Log($"Trigger count: {currentCount}");

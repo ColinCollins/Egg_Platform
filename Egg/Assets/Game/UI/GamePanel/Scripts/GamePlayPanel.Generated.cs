@@ -11,6 +11,7 @@ using TMPro;
         [SerializeField] private CustomButton LeftMoveBtn;
         [SerializeField] private CustomButton RightMoveBtn;
         [SerializeField] private CustomButton JumpBtn;
+        [SerializeField] private CustomButton UseBtn;
         [SerializeField] private CustomButton ResetBtn;
         [SerializeField] private CustomButton PauseBtn;
         [SerializeField] private CustomButton TipsBtn;
