@@ -5,6 +5,7 @@ using Game.Events;
 using Game.Play;
 using MoreMountains.Feedbacks;
 using TMPro;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 /// <summary>
@@ -21,9 +22,15 @@ public partial class PasswordPopup : BaseUIView, IEventSender
     private const int MaxLength = 4;
     private readonly StringBuilder inputBuffer = new StringBuilder(MaxLength);
 
-    public override void OnOpen()
+    public override void OnCreate()
     {
         BindButtons();
+        errorFeedback.Events.OnComplete.RemoveAllListeners();
+        errorFeedback.Events.OnComplete.AddListener(OnFeedbackComplete);
+    }
+
+    public override void OnOpen()
+    {
         ResetInput();
     }
 
@@ -66,6 +73,11 @@ public partial class PasswordPopup : BaseUIView, IEventSender
 
         errorFeedback?.PlayFeedbacks();
         // ResetInput();
+    }
+
+    private void OnFeedbackComplete()
+    {
+        ResetInput();
     }
 
     public void ResetInput()
