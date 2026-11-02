@@ -1,0 +1,87 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Game.Dig;
+using UnityEditor;
+using UnityEngine;
+public sealed class GermSolidProbe : MonoBehaviour
+{
+    public GameObject[] GermPrefabs;
+    public GameObject LevelPrefab;
+    const string Output="C:/Users/admin/AppData/Local/Temp/brainpunk-germ-solid-20261013/";
+    static readonly List<string> checks=new List<string>();
+    static FieldInfo Field(object o,string name)=>o.GetType().GetField(name,BindingFlags.NonPublic|BindingFlags.Instance);
+    static T Get<T>(object o,string name)=>(T)Field(o,name).GetValue(o);
+    static void Set(object o,string name,object value)=>Field(o,name).SetValue(o,value);
+    static void Invoke(object o,string name)=>o.GetType().GetMethod(name,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(o,null);
+    static void Check(bool ok,string name){if(!ok)throw new Exception(name);checks.Add("通过："+name);}
+    static void Fail(Exception e){File.WriteAllText(Output+"failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}
+    public static void Run()
+    {
+        try
+        {
+            var assets=new GameObject[6];
+            for(int i=0;i<6;i++)
+            {
+                assets[i]=AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Game/Prefabs/DigLevel/DigGerm_{i+1:000}.prefab");
+                var germ=assets[i].GetComponent<DigGermCtrl>();var collider=Get<Collider2D>(germ,"contactCollider");var rb=Get<Rigidbody2D>(germ,"physicsBody");
+                Check(rb&&rb.gameObject==germ.gameObject&&collider.attachedRigidbody==rb&&!collider.isTrigger,$"Germ_{i+1:000}导入实体Collider及根刚体绑定");
+            }
+            File.WriteAllLines(Output+"import-checks.txt",checks);
+            var probe=new GameObject("仅TEMP Germ实体物理验证").AddComponent<GermSolidProbe>();probe.GermPrefabs=assets;probe.LevelPrefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Prefabs/DigLevel/DigLevel_001.prefab");EditorApplication.isPlaying=true;
+        }
+        catch(Exception e){Fail(e);}
+    }
+    IEnumerator Start()
+    {
+        Physics2D.simulationMode=SimulationMode2D.Script;
+        DigGermCtrl standalone=null;GameObject floor=null;int completed=0;
+        try
+        {
+            standalone=Instantiate(GermPrefabs[0]).GetComponent<DigGermCtrl>();var rb=Get<Rigidbody2D>(standalone,"physicsBody");var shape=Get<Collider2D>(standalone,"contactCollider");shape.isTrigger=true;standalone.Initialize();
+            Check(!shape.isTrigger&&!rb.simulated,"Initialize强制实体碰撞且初始冻结");
+            Check(Mathf.Abs(((CircleCollider2D)shape).radius-.35f*DigSizeRules.ScaleFor(5))<.00001f,"圆形保留旧大小半径映射");
+            standalone.SetPaused(false);rb.linearVelocity=new Vector2(2,-3);rb.angularVelocity=12;standalone.SetPaused(true);standalone.SetPaused(true);Physics2D.Simulate(.04f);
+            Check(!rb.simulated,"暂停及重复暂停停止模拟");standalone.SetPaused(false);
+            Check(rb.simulated&&rb.linearVelocity==new Vector2(2,-3)&&Mathf.Abs(rb.angularVelocity-12)<.0001f,"解除暂停恢复线速度及角速度");
+            rb.position=new Vector2(30,0);rb.linearVelocity=Vector2.zero;rb.angularVelocity=0;floor=new GameObject("仅TEMP地面");floor.transform.position=new Vector3(30,-1,0);floor.AddComponent<BoxCollider2D>().size=new Vector2(3,.1f);Physics2D.SyncTransforms();for(int i=0;i<60;i++)Physics2D.Simulate(.02f);
+            Check(rb.position.y>-.8f&&rb.position.y<-.5f&&Mathf.Abs(rb.linearVelocity.y)<.05f,"真实Dynamic病菌落地且被实体地面支撑");
+            standalone.TryClaim();Check(!rb.simulated&&!shape.enabled,"认领立即停止刚体并关闭实体Collider");standalone.SetPaused(true);standalone.SetPaused(false);Check(!rb.simulated,"已认领病菌解除暂停不恢复物理");
+            standalone.PlayConsume(transform,()=>completed++);standalone.SetPaused(true);
+        }
+        catch(Exception e){Fail(e);yield break;}
+        yield return new WaitForSeconds(.36f);
+        try{Check(completed==0&&standalone.gameObject.activeSelf,"暂停吸入不提前完成");standalone.SetPaused(false);}catch(Exception e){Fail(e);yield break;}
+        yield return new WaitForSeconds(.36f);
+        try
+        {
+            Check(completed==1&&!standalone.gameObject.activeSelf,"恢复吸入后一次回调并隐藏");Destroy(floor);
+            for(int kind=0;kind<3;kind++)
+            {
+                var levelObject=Instantiate(LevelPrefab);var level=levelObject.GetComponent<DigLevelCtrl>();var germs=Get<DigGermCtrl[]>(level,"germs");var target=germs[0];Collider2D shape=Get<Collider2D>(target,"contactCollider");
+                if(kind==1){DestroyImmediate(shape);var box=target.gameObject.AddComponent<BoxCollider2D>();box.size=new Vector2(.62f,.38f);box.offset=new Vector2(.03f,.02f);shape=box;Set(target,"contactCollider",shape);}
+                if(kind==2){DestroyImmediate(target.gameObject);target=Instantiate(GermPrefabs[4],levelObject.transform).GetComponent<DigGermCtrl>();germs[0]=target;shape=Get<Collider2D>(target,"contactCollider");}
+                level.InitializeRuntime();var rb=Get<Rigidbody2D>(target,"physicsBody");
+                Check(!rb.simulated&&!shape.isTrigger,"关卡初始暂停冻结 "+shape.GetType().Name);
+                var actor=Get<DigActorCtrl>(level,"actor");var actorShape=Get<CircleCollider2D>(actor,"circle");foreach(var collider in levelObject.GetComponentsInChildren<Collider2D>(true))if(collider!=actorShape&&collider!=shape)collider.enabled=false;
+                level.SetPaused(false);var actorBody=Get<Rigidbody2D>(actor,"physicsBody");actorBody.gravityScale=0;actorBody.position=Vector2.zero;rb.gravityScale=0;rb.position=Vector2.zero;Physics2D.SyncTransforms();Physics2D.Simulate(.02f);
+                Check(Get<bool>(level,"_hasContacts"),"实际Collision回调上报 "+shape.GetType().Name);Invoke(level,"FixedUpdate");
+                Check(target.IsClaimed&&!shape.enabled&&!rb.simulated&&actor.CurrentSize==10+target.GrowthSize,"实体碰撞吞噬成长及冻结 "+shape.GetType().Name);
+                Check(!target.TryClaim(),"重复认领不重复结算 "+shape.GetType().Name);
+                if(kind==1){var b=(BoxCollider2D)shape;Check(b.size==new Vector2(.62f,.38f)&&b.offset==new Vector2(.03f,.02f),"Box形状参数保留");}
+                if(kind==2)Check(shape.gameObject!=target.gameObject&&shape.attachedRigidbody==rb,"实际Body子Polygon由attachedRigidbody识别根病菌");
+                level.SetPaused(true);level.SetPaused(false);Check(!rb.simulated,"吞噬后关卡暂停恢复不重启物理 "+shape.GetType().Name);levelObject.SetActive(false);Destroy(levelObject);
+            }
+            var failureObject=Instantiate(LevelPrefab);var failureLevel=failureObject.GetComponent<DigLevelCtrl>();var failureGerms=Get<DigGermCtrl[]>(failureLevel,"germs");Set(failureGerms[0],"currentSize",99);failureLevel.InitializeRuntime();var failureActor=Get<DigActorCtrl>(failureLevel,"actor");var failureShape=Get<CircleCollider2D>(failureActor,"circle");var largeShape=Get<Collider2D>(failureGerms[0],"contactCollider");foreach(var collider in failureObject.GetComponentsInChildren<Collider2D>(true))if(collider!=failureShape&&collider!=largeShape)collider.enabled=false;
+            failureLevel.SetPaused(false);var ab=Get<Rigidbody2D>(failureActor,"physicsBody");ab.gravityScale=0;ab.position=Vector2.zero;var gb=Get<Rigidbody2D>(failureGerms[0],"physicsBody");gb.gravityScale=0;gb.position=Vector2.zero;Physics2D.SyncTransforms();Physics2D.Simulate(.02f);Invoke(failureLevel,"FixedUpdate");
+            Check(failureLevel.IsResultLocked&&!failureGerms[0].IsClaimed&&failureActor.CurrentSize==10,"较大病菌实体碰撞锁失败且不成长");failureLevel.SetPaused(false);foreach(var germ in failureGerms)Check(!Get<Rigidbody2D>(germ,"physicsBody").simulated,"失败锁后Resume仍冻结病菌");failureObject.SetActive(false);Destroy(failureObject);
+            var canceled=Instantiate(GermPrefabs[0]).GetComponent<DigGermCtrl>();canceled.Initialize();canceled.SetPaused(false);canceled.TryClaim();canceled.PlayConsume(transform,()=>completed++);canceled.StopConsumption();Check(!Get<Rigidbody2D>(canceled,"physicsBody").simulated,"取消吸入停止物理");
+            var unclaimed=Instantiate(GermPrefabs[0]).GetComponent<DigGermCtrl>();unclaimed.Initialize();unclaimed.SetPaused(false);unclaimed.gameObject.SetActive(false);Check(!Get<Rigidbody2D>(unclaimed,"physicsBody").simulated,"退出失活停止未认领病菌物理");Destroy(unclaimed.gameObject);
+        }
+        catch(Exception e){Fail(e);yield break;}
+        yield return new WaitForSeconds(.36f);
+        try{Check(completed==1,"取消不补发回调");File.WriteAllLines(Output+"play-checks.txt",checks);Debug.Log("Germ实体物理检查通过 "+checks.Count+" 项");EditorApplication.Exit(0);}catch(Exception e){Fail(e);}
+    }
+}

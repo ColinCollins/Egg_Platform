@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- For Facebook(Meta) -->
+        <!-- In the Audience Network Android SDK,
+            we use 127.0.0.1 (localhost) as a caching
+            proxy to cache media files in the SDK.
+            Since Android P, cleartext traffic (unencrypted HTTP)
+            will be blocked by default, which will affect the
+            functionality of media caching of the SDK and could
+            affect user experience and ads revenue. -->
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

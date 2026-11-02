@@ -1,0 +1,37 @@
+真实 Qboxy 动画已加载 eat=0.6 hiccup=1.4
+Bear FSM 默认 idle 循环，私有节点可实例化
+锁旋转刚体按线速度进入 scroll
+持续移动不重播 scroll
+滚动阈值回差保留 scroll
+停止移动恢复 idle
+ReachTarget 按住画线进入 nervous
+画线期间滚动优先于 nervous
+仍按住时停止移动恢复 nervous
+松手退出 nervous
+真实认领批次触发 eat 一次性动作
+eat 期间再次吞噬不重置轨道、不排队
+菜单暂停冻结真实 Spine eat
+eat 完成恢复 idle，ReachTarget 吞噬不提前胜利
+ReachTarget 成功维持原流程，不播 hiccup
+吞噬玩法画线不触发 nervous
+全部吃完锁玩法，全部参与角色播放 hiccup，零延迟仍等待
+hiccup 中冻结物理并拒绝失败与重复胜利
+多角色等待最后一个 hiccup 完成
+胜利演出菜单暂停不会提前完成
+后台暂停保持 hiccup 剩余进度
+恢复后全部 hiccup 完成才一次提交成功
+一次性完成解绑，无重复结果
+hiccup 先完成仍保留原 victoryDelay 下限
+原延迟到期提交一次成功
+仅关卡禁用也拒绝旧 Spine 完成回调
+退出解绑 Spine 轨道与胜利回调
+旧无 Spine 角色仍可正常结算
+GM 胜利不伪造吞噬 hiccup
+提示跳关维持原胜利链
+失败清除 eat 回调并进入原死亡动作
+新增 Spine 后死亡仍上跳且保持尺寸
+死亡下坠离屏后正常失败结算
+资源包含皮肤 Qboxy_original
+资源包含皮肤 Qboxy_pink
+资源包含皮肤 Qboxy_bad
+PASS 36

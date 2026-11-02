@@ -1,0 +1,19 @@
+using System;
+using System.IO;
+using Game.Dig;
+using UnityEditor;
+using UnityEngine;
+public static class Dig004EntryRunner
+{
+    public static void Run()
+    {
+        try
+        {
+            var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Prefabs/DigLevel/DigLevel_004.prefab");
+            if(!prefab)throw new Exception("004资源未导入");
+            new GameObject("仅TEMP第四关初始化验证").AddComponent<Dig004EntryProbe>().Prefab=prefab;
+            EditorApplication.isPlaying=true;
+        }
+        catch(Exception e){File.WriteAllText("C:/Users/admin/AppData/Local/Temp/brainpunk-dig004-entry-20261013/failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}
+    }
+}

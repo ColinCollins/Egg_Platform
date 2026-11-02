@@ -1,0 +1,51 @@
+PASS 当前有效关优先 per=5 current=1 saved=-3
+PASS 当前有效关优先 per=5 current=1 saved=0
+PASS 当前有效关优先 per=5 current=1 saved=99
+PASS 当前有效关优先 per=5 current=10 saved=-3
+PASS 当前有效关优先 per=5 current=10 saved=0
+PASS 当前有效关优先 per=5 current=10 saved=99
+PASS 当前有效关优先 per=5 current=11 saved=-3
+PASS 当前有效关优先 per=5 current=11 saved=0
+PASS 当前有效关优先 per=5 current=11 saved=99
+PASS 当前有效关优先 per=5 current=25 saved=-3
+PASS 当前有效关优先 per=5 current=25 saved=0
+PASS 当前有效关优先 per=5 current=25 saved=99
+PASS 当前有效关优先 per=10 current=1 saved=-3
+PASS 当前有效关优先 per=10 current=1 saved=0
+PASS 当前有效关优先 per=10 current=1 saved=99
+PASS 当前有效关优先 per=10 current=10 saved=-3
+PASS 当前有效关优先 per=10 current=10 saved=0
+PASS 当前有效关优先 per=10 current=10 saved=99
+PASS 当前有效关优先 per=10 current=11 saved=-3
+PASS 当前有效关优先 per=10 current=11 saved=0
+PASS 当前有效关优先 per=10 current=11 saved=99
+PASS 当前有效关优先 per=10 current=25 saved=-3
+PASS 当前有效关优先 per=10 current=25 saved=0
+PASS 当前有效关优先 per=10 current=25 saved=99
+FAIL 首次创建当前ID失效回退保存页，不先回写第一关
+FAIL 当前关配置缺失回退进关页
+FAIL 旧保存页越界夹取 -9
+FAIL 旧保存页越界夹取 99
+PASS 排序缩短使当前ID缺失后回退并夹取保存页
+PASS 按钮与拖动显示目标页
+FAIL 浏览不保存页码
+FAIL 关闭不保存页码
+PASS 浏览关闭后重开显示当前关
+FAIL 选关进入才保存当前页
+PASS 选关后重开定位进入关
+PASS 保存失败沿用原警告/内存值且磁盘旧值不变
+PASS 旧版本请求不写进关页
+PASS 有效广告请求受理
+PASS 广告等待保持翻页/关闭门禁
+FAIL 广告完成恢复浏览且不保存
+FAIL 排序减少只夹取显示页/刷新版本不保存页码
+FAIL 远端刷新后关闭保留原进关页
+FAIL 远端重排按顺序重新编号，重开仍按CurrentLevel定位且不保存页码
+FAIL 首页入口不再跳最高可玩页
+PASS 首页关闭配置门禁保留
+FAIL 关内/加载中退出采用普通打开定位 loading=False
+FAIL 关内/加载中退出采用普通打开定位 loading=True
+PASS 选关页退出不会自动重开
+FAIL OneLink仍复用进关页保存链
+PASS 已关闭面板拒绝进关写入
+RESULT checks=50 failures=15

@@ -1,0 +1,535 @@
+app_name: BrainPunk
+
+flavor: main
+
+details:
+  android_gp_url: https://play.google.com/store/apps/details?id=com.brain.tricky.puzzle.games.test.quest
+  authority: brain.gurugame.ai
+  bundle_id: com.brain.tricky.puzzle.games.test.quest
+  default_cdn_prefix: https://cdn3-brainpunk.fungame.cloud
+  email_url: brain@gurugame.ai
+  facebook_app_id: '25486648387670947'
+  facebook_client_token: 8ce4d2a36e45d5acd5500752074a4542
+  firebase_project_id: brainpunk-52a55
+  flavor: main
+  ios_domains:
+    - brainpunk.onelink.me
+  ios_spp_store_url: https://apps.apple.com/us/app/id6757749388
+  package_name: com.brain.tricky.puzzle.games.test.quest
+  policy_url: https://brain.gurugame.ai/policy.html
+  saas_app_id: brainpunk
+  storage_prefix: https://firebasestorage.googleapis.com/v0/b/brainpunk-52a55.firebasestorage.app/o/
+  terms_url: https://brain.gurugame.ai/termsofservice.html
+  game_service_client_id: 586245451016-mi9bei7sqidh7d4kt97cgoni7kh2q2dj.apps.googleusercontent.com
+
+deployment:
+  adjust_deferred_ad_revenue_duration: 0
+  ads_compliant_initialization: false
+  allow_interstitial_as_alternative_reward: true
+  api_connect_timeout: 15000
+  api_receive_timeout: 15000
+  auto_request_notification_permission: true
+  auto_restore_iap: true
+  bind_game_credential_strategy: ignore
+  conversion_events:
+  - level_up
+  - level_up_1
+  - tch_ad_rev_roas_001
+  disable_rewards_ads: false
+  disable_unsold_manifest_deliver_inventory: true
+  enable_analytics_statistic: false
+  enable_dithering: true
+  enabled_custom_consents: 'false'
+  enabled_guru_analytics_strategy: false
+  enabled_sync_account_profile: false
+  fullscreen_ads_min_interval: 60
+  guru_analytics_upload_base_url: https://collect.saas.castbox.fm/
+  igc_balance_secret: 2654404609
+  init_igc: 0
+  ios_sandbox_subs_renewal_speed: 2
+  log_file_count: 7
+  log_file_size_limit: 10485760
+  notification_permission_prompt_trigger: rationale
+  persistent_log_level: 1
+  property_cache_size: 256
+  purchase_event_trigger: '1'
+  should_load_interstitial_by_checker: false
+  should_preload_interstitial_by_checker: 'false'
+  show_internal_ads_when_banner_unavailable: false
+  subscription_grace_period: '86400000'
+  subscription_restore_grace_count: 3
+  tracking_notification_permission_pass: false
+  tracking_notification_permission_pass_limit_times: 10
+
+remote_config:
+  values:
+    analytics_config: '{"cap":["firebase","facebook","guru"], "init_delay_s": 10}'
+    app_rater: '{"entry_enable": false,"gap_days":0,"last_pop_gap_days":7,"validation":"2"}'
+    bads_config: '{"free_s":0,"win_count":1,"amazon_enable":false}'
+    iads_config: '{"free_s":0,"validation":"3","scene":"game_start|game_continue|p_continue|p_main|game_win|star_complete","retry_min_s":10,"retry_max_s":600,"amazon_enable":true,"imp_gap_s":10,"sp_scene":"game_start:60","ignore_scene_check":true}'
+    rads_config: '{"free_s":0,"validation":"1","amazon_enable":true}'
+    level_config: '{ "enabled":false, "showRatingLevel":12, "ad_interstitialCD":30, "ad_rewardResetInterstitialCD":30, "ad_interstitialShowMinLevel":4, "ad_interstitialShowIntervalCount":2, "ad_interstitialShowFailedCount":12, "mainGame_interstitalAdLevelRange":[4,10,999], "mainGame_interstitalAdRangeLevelCount":[4,2,1], "mianGame_interstititalAdRangeFailedCount":[-1,12,6], "level_sort":[10001,10002,10003,10011,10005,10089,10004,10010,10143,10036,10088,10007,10076,10029,10006,10077,10039,10019,10015,10014,10009,10052,10042,10008,10091,10092,10031,10012,10017,10021,10013,10097,10018,10082,10067,10020,10016,10027,10022,10024,10023,10026,10075,10028,10025,10030,10090,10032,10033,10034,10035,10037,10095,10040,10080,10041,10038,10043,10046,10051,10045,10044,10047,10049,10054,10053,10048,10050,10058,10055,10079,10057,10056,10059,10060,10061,10062,10063,10064,10065,10066,10068,10074,10084,10085,10086,10087,10069,10072,10070,10073,10093,10078,10083,10105,10071,10094,10096,10098,10099,10103,10109,10115,10116,10104,10123,10124,10117,10101,10106,10126,10128,10119,10100,10081,10102,10125,10107,10110,10108,10133,10111,10112,10113,10127,10118,10120,10121,10122,10136,10130,10131,10132,10134,10129,10140,10142,10138,10144,10145,10146,10147,10137,10139,10141,10149,10150,10135,10151], "open_gaps":true, "gameTipsPopupCoinCost":60, "ad_dailyNOAdPopupAutoShowCount":5, "shop_adfreeCoinAutoShowCount":99, "gameTipsPopupPassLevelCoinCost":40, "showTipsFailCount":2, "showTipsTimeLimit":10, "victoryHorizantalRewards":[30,40,50,90], "initGameCoinReward":0, "currentRemoteConfigVersion":"1.16.0", "showVersionBoard":true, "getFreeSkinLevel":6, "freeSkinId":"203004", "isOpenPostcard":true, "postcardGuideLevel":8, "gameTipsGuideLevel":3, "gameTipsGuideFailedCount":3, "gameTipsGuideWaitingTime":30, "dailyChallengeStep1CoinReward":40, "dailyChallengeSteps":[4,10], "dailyChallengeUnlockLevel":10, "dailyChallengeIsOpen":true, "dailyChallengeStep2CoinReward":60, "dailyChallengeRandomSkinPoolId":1, "dailyChallengeRewardMultiple":2, "dailyFreeCoinCount":5, "isOpenDailyChest":true, "autoShowChestGiftLevel":7}'
+    drawgame_config: '{ "enabled":false, "drawGameIsOpen":true, "drawGameShowTipsFailCount":5, "drawGameShowTipsTimeLimit":20, "drawGame_interstitialCD":30, "drawGame_rewardResetInterstitialCD":30, "drawGame_interstitialShowMinLevel":6, "drawGame_interstitialShowIntervalCount":5, "drawGame_interstitialShowFailedCount":30, "drawGame_interstitalAdLevelRange":[4,999], "drawGame_interstitalAdRangeLevelCount":[4,2], "drawGame_interstititalAdRangeFailedCount":[6,6], "drawGame_dailyNOAdPopupAutoShowCount":5, "drawGame_gameTipsPopupCoinCost":60, "drawGame_gameTipsPopupPassLevelCoinCost":40, "level_sort":[20001,20045,20003,20004,20008,20002,20015,20022,20005,20023,20010,20007,20016,20012,20011,20006,20032,20033,20042,20043,20017,20019,20014,20035,20024,20029,20030,20027,20034,20036,20037,20038,20039,20040,20047,20053,20054,20055,20056,20057,20058,20059,20060,20061,20062,20063,20064,20065,20066,20041,20044,20046,20048,20049,20021,20050,20051,20069,20052,20067,20068,20020,20070,20071,20072,20073,20074,20009,20075,20076,20077,20078,20079,20080,20028,20031,20013,20025,20018,20026,20081,20082,20083,20084,20085,20086,20087,20088,20089,20090,20091,20092,20093,20094,20095,20096,20097,20098,20099]}'
+    iwannergame_config: '{ "iWannerGame_IsOpen":true, "iWannerGame_showSkipFailCount":2, "iWannerGame_interstitialCD":30, "iWannerGame_rewardResetInterstitialCD":30, "iWannerGame_interstitialShowMinGroup":1, "iWannerGame_interstitialShowIntervalCount":1, "iWannerGame_interstitialShowFailedCount":10, "iWannerGame_dailyNOAdPopupAutoShowCount":5, "iWannerGame_interstitialShowPassedLevelCount":-1, "iwannarGame_interstitalAdLevelRange":[1,999], "iwannarGame_interstitalAdRangeLevelCount":[1,1], "iwannarGame_interstititalAdRangeFailedCount":[12,12]}'
+    diggame_config: '{"enabled":false,"digGameIsOpen":true,"digGameShowTipsFailCount":5,"digGameShowTipsTimeLimit":20,"digGame_interstitialCD":30,"digGame_rewardResetInterstitialCD":30,"digGame_interstitialShowMinLevel":6,"digGame_interstitialShowIntervalCount":5,"digGame_interstitialShowFailedCount":30,"digGame_dailyNOAdPopupAutoShowCount":5,"digGame_gameTipsPopupCoinCost":60,"digGame_gameTipsPopupPassLevelCoinCost":40,"digGame_interstitalAdLevelRange":[4,999],"digGame_interstitalAdRangeLevelCount":[4,2],"digGame_interstititalAdRangeFailedCount":[6,6],"level_sort":[40001,40002,40003,40004,40005,40006,40007,40008,40009,40010,40011,40012,40013,40014,40015,40016,40017,40018,40019,40020,40021,40022,40023,40024,40025,40026,40027,40028,40029,40030]}'
+products:
+  no_ads:
+    android: "brpk.a.iap.noads1"
+    ios: "brpk.i.iap.noads1"
+    attr: possessive
+    capabilities: noAds
+    method: iap
+    manifest:
+      category: "no_ads"
+      ignore_sales: true
+
+  coin_pack_250:
+    android: "brpk.a.iap.coinpack1"
+    ios: "brpk.i.iap.coinpack1"
+    attr: consumable
+    method: iap
+    manifest:
+      category: "coin"
+
+  coin_pack_500:
+    android: "brpk.a.iap.coinpack2"
+    ios: "brpk.i.iap.coinpack2"
+    attr: consumable
+    method: iap
+    manifest:
+      category: "coin"
+
+  coin_pack_1000:
+    android: "brpk.a.iap.coinpack3"
+    ios: "brpk.i.iap.coinpack3"
+    attr: consumable
+    method: iap
+    manifest:
+      category: "coin"
+  
+  coin_pack_2500:
+    android: "brpk.a.iap.coinpack4"
+    ios: "brpk.i.iap.coinpack4"
+    attr: consumable
+    method: iap
+    manifest:
+      category: "coin"
+  
+  noad_bundle:
+    android: "brpk.a.iap.noadsbundle"
+    ios: "brpk.i.iap.noadsbundle"
+    attr: possessive
+    capabilities: noAds
+    method: iap
+    manifest:
+      category: "no_ads"
+      ignore_sales: true
+
+  newnoad_bundle:
+    android: "brpk.a.iap.newnoadsbundle"
+    ios: "brpk.i.iap.newnoadsbundle"
+    attr: possessive
+    capabilities: noAds
+    method: iap
+    manifest:
+      category: "no_ads"
+      ignore_sales: true
+
+  newno_ads:
+    android: "brpk.a.iap.newnoads"
+    ios: "brpk.i.iap.newnoads"
+    attr: possessive
+    capabilities: noAds
+    method: iap
+    manifest:
+      category: "no_ads"
+      ignore_sales: true
+  
+  hint99:
+    android: "brpk.a.iap.hint99"
+    ios: "brpk.i.iap.hint99"
+    attr: possessive
+    method: iap
+    manifest:
+      category: "hint"
+
+  gift_pack_1:
+    android: "brpk.a.iap.giftpack1"
+    ios: "brpk.i.iap.giftpack01"
+    attr: possessive
+    method: iap
+    manifest:
+      category: "gift_pack"
+
+  gift_pack_2:
+    android: "brpk.a.iap.giftpack2"
+    ios: "brpk.i.iap.giftpack02"
+    attr: possessive
+    method: iap
+    manifest:
+      category: "gift_pack"
+
+  gift_pack_3:
+    android: "brpk.a.iap.giftpack3"
+    ios: "brpk.i.iap.giftpack03"
+    attr: possessive
+    method: iap
+    manifest:
+      category: "gift_pack"
+
+  gift_pack_4:
+    android: "brpk.a.iap.giftpack4"
+    ios: "brpk.i.iap.giftpack04"
+    attr: possessive
+    method: iap
+    manifest:
+      category: "gift_pack"
+
+  gift_pack_5:
+    android: "brpk.a.iap.giftpack5"
+    ios: "brpk.i.iap.giftpack05"
+    attr: possessive
+    method: iap
+    manifest:
+      category: "gift_pack"
+
+  first_pack:
+    android: "brpk.a.iap.firstpack"
+    ios: "brpk.i.iap.firstpack"
+    attr: consumable
+    method: iap
+    manifest:
+      category: "coin"
+
+ads_profile:
+  ad_review_api_key:
+    android: fc45e03ad1f286cadb813872493d021bb18d63a058547eeec2795af6ffb1039b7616552c4c062e4020199b
+    ios: fc45e03ad1f286cadb813872493d021bb18d63a058547eeec2795af6ffb1039b7616552c4c062e4020199b
+  amz_app_id:
+    android: 'fc8f78b2-ac6d-4d25-afd5-943f3f854d0d'
+    ios: '8aa939c5-662e-4a3f-aad7-13336b22ce28'
+  banner_ad_unit_id:
+    android: aab674f7fdecb215
+    ios: 8c622fd013e9c761
+  banner_amz_slot_id:
+    android: '9e81ce69-d2ba-4ffe-b85a-e4eb6f84d4f6'
+    ios: '5b58f56f-cc6e-4e98-b10a-d5a9417ec360'
+  gms_ads_app_id:
+    android: ca-app-pub-2436733915645843~6996118680
+    ios: ca-app-pub-2436733915645843~1743792004
+  interstitial_ad_unit_id:
+    android: e670774b655e9684
+    ios: 030626c2321628f7
+  interstitial_amz_slot_id:
+    android: '72f1809e-4f12-49d2-9ff5-c93eabce2835'
+    ios: 'a1e0afe7-309b-427d-98cf-ce4f1663fb12'
+  ironsource_app_key:
+    android: '2673930c5'
+    ios: '26738f73d'
+  ironsource_banner_amz_slot_id:
+    android: ''
+    ios: ''
+  ironsource_interstitial_amz_slot_id:
+    android: ''
+    ios: ''
+  ironsource_rewarded_amz_slot_id:
+    android: ''
+    ios: ''
+  max_sdk_key:
+    android: V5I0i-vOTXkc_HEyqLg0lNm_ivlzp1wPVF3Vs7Jk4ix6WMAwEKGHMpugavZp_7xgss186Frvss23NGSWZXSago
+    ios: V5I0i-vOTXkc_HEyqLg0lNm_ivlzp1wPVF3Vs7Jk4ix6WMAwEKGHMpugavZp_7xgss186Frvss23NGSWZXSago
+  mrec_ad_unit_id:
+    android: ''
+    ios: ''
+  rewarded_amz_slot_id:
+    android: 'dd3ea773-0ac5-4bd2-9ce8-593a6e80504f'
+    ios: '1014df07-aec5-40e7-885d-86007762f41e'
+  rewards_ad_unit_id:
+    android: 85b76bf4b2bc5630
+    ios: bfb041251fb9203e
+  tp_creative_key:
+    android: ''
+    ios: ''
+# ======== B2B Disabled List ======== 
+  max_disabled_b2b_ad_unit_ids:
+    android:
+      - a51dc2415c0cd732
+      - 8a145614d13cb8dd
+      - d173d1593aaed580
+      - 81ba833ae9aaef1d
+      - 5e24bdb78217c87b
+      - 2a3fa46fa7778b21
+      - 0c7acead9470aeab
+      - 74e4d647f286a10b
+      - df78b77172a654fc
+      - 7081c702b35d9be7
+      - 7fad21f5b6e771e6
+      - 2e42874370679d39
+      - 01648c743a637c46
+      - efde89356cdc7b70
+    ios:
+      - 229d542e8d6da2f8
+      - b8c6d008b8a383fe
+      - 9bac5f1974214d7c
+      - a9514c8603987aec
+      - 1f559540fd678129
+      - c8d105fa0ddc5e05
+      - 0eec013f444133d4
+      - 1a021a26cc1b88af
+      - bc361c89613ae451
+      - 48e60eebeec28788
+      - 27a452941c303990
+      - 605e801e59ff7187
+      - e926a3c3d7ea622e
+      - 34a6612d875b441a
+  # ======== B2B Disabled List ======== 
+
+adjust_profile:
+  app_token:
+    android: '0'
+    ios: '1'
+  event_map: {}
+
+achievements:
+  The_Adventure_Begins:
+    title: The Adventure Begins
+    description: Complete Level 1.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQDg'
+        points: 10
+      apple_game_center:
+        remote_id: 'BrainPunk_The_Adventure_Begins'
+        points: 10
+  Take_a_Break:
+    title: Take a Break
+    description: Enter a To Be Continued level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQFw'
+        points: 10
+      apple_game_center:
+        remote_id: 'BrainPunk_Take_a_Break'
+        points: 10
+  Pop_It:
+    title: Pop It
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQCA'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Pop_It'
+        points: 5
+  Mind_Your_Manners:
+    title: Mind Your Manners
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQCQ'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Mind_Your_Manners'
+        points: 5
+  Fragile:
+    title: Fragile
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQEg'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Fragile'
+        points: 5
+  The_Fourth_Wall:
+    title: The Fourth Wall
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQBA'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_The_Fourth_Wall'
+        points: 5
+  One_Mean_Big_Dog:
+    title: One Mean Big Dog
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQAw'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_One_Mean_Big_Dog'
+        points: 5
+  Cute_Little_Puppy:
+    title: Cute Little Puppy
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQCg'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Cute_Little_Puppy'
+        points: 5
+  Rule_Breaker:
+    title: Rule Breaker
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQBg'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Rule_Breaker'
+        points: 5
+  Love_Dive:
+    title: Love Dive
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQDw'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Love_Dive'
+        points: 5
+  Race_Against_Time:
+    title: Race Against Time
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQBQ'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Race_Against_Time'
+        points: 5
+  Power_of_Words:
+    title: Power of Words
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQFg'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Power_of_Words'
+        points: 5
+  Fly_Away:
+    title: Fly Away
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQEw'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Fly_Away'
+        points: 5
+  Is_There_a_Bunny_on_the_Moon:
+    title: Is There a Bunny on the Moon
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQDA'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Is_There_a_Bunny_on_the_Moon'
+        points: 5
+  I_Am_Not_a_Robot:
+    title: I Am Not a Robot
+    description: Complete the designated level for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQEQ'
+        points: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_I_Am_Not_a_Robot'
+        points: 5
+  A_Flash_of_Inspiration:
+    title: A Flash of Inspiration
+    description: Use the Hint feature for the first time.
+    type: single
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQBw'
+        points: 10
+      apple_game_center:
+        remote_id: 'BrainPunk_A_Flash_of_Inspiration'
+        points: 10
+  Puzzle_Master_I:
+    title: Puzzle Master I
+    description: Complete a total of 5 levels.
+    type: incremental
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQFQ'
+        points: 5
+        step: 5
+      apple_game_center:
+        remote_id: 'BrainPunk_Puzzle_Master_I'
+        points: 5
+    target: 5
+  Puzzle_Master_II:
+    title: Puzzle Master II
+    description: Complete a total of 10 levels.
+    type: incremental
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQFA'
+        points: 5
+        step: 10
+      apple_game_center:
+        remote_id: 'BrainPunk_Puzzle_Master_II'
+        points: 5
+    target: 10
+  Puzzle_Master_III:
+    title: Puzzle Master III
+    description: Complete a total of 15 levels.
+    type: incremental
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQCw'
+        points: 5
+        step: 15
+      apple_game_center:
+        remote_id: 'BrainPunk_Puzzle_Master_III'
+        points: 5
+    target: 15
+  Puzzle_Master_IV:
+    title: Puzzle Master IV
+    description: Complete a total of 20 levels.
+    type: incremental
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQEA'
+        points: 5
+        step: 20
+      apple_game_center:
+        remote_id: 'BrainPunk_Puzzle_Master_IV'
+        points: 5
+    target: 20
+  Puzzle_Master_V:
+    title: Puzzle Master V
+    description: Complete a total of 25 levels.
+    type: incremental
+    bindings:
+      google_play_games:
+        remote_id: 'CgkIiNrO94cREAIQDQ'
+        points: 5
+        step: 25
+      apple_game_center:
+        remote_id: 'BrainPunk_Puzzle_Master_V'
+        points: 5
+    target: 25
+

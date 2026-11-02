@@ -1,0 +1,92 @@
+C:\Users\admin\AppData\Local\Temp\brainpunk-dig-waiting-stars-20261012\managed\Probe.cs(3,113): warning CS0649: 从未对字段“DigPlayCtrl._version”赋值，字段将一直保持其默认值 0 [C:\Users\admin\AppData\Local\Temp\brainpunk-dig-waiting-stars-20261012\managed\Verify.csproj]
+C:\Users\admin\AppData\Local\Temp\brainpunk-dig-waiting-stars-20261012\managed\Probe.cs(148,218): warning CS0649: 从未对字段“DigGame_GameVictoryPanel.sharePart”赋值，字段将一直保持其默认值 null [C:\Users\admin\AppData\Local\Temp\brainpunk-dig-waiting-stars-20261012\managed\Verify.csproj]
+PASS 新档初始化待播集合
+PASS 旧档缺字段保留最高星与通关
+PASS 旧档null修复且幂等
+PASS 实际JSON公开属性往返
+PASS 与Draw实际写入方法比较 (, , 3, True)
+PASS 与Draw实际写入方法比较 (1, , 3, True)
+PASS 与Draw实际写入方法比较 (1, 1, 3, True)
+PASS 与Draw实际写入方法比较 (3, , 1, True)
+PASS 与Draw实际写入方法比较 (3, 2, 3, True)
+PASS 与Draw实际写入方法比较 (0, , -1, True)
+PASS 与Draw实际写入方法比较 (0, -2, 5, True)
+PASS 与Draw实际写入方法比较 (1, 99, 3, True)
+PASS 与Draw实际写入方法比较 (, , 3, False)
+PASS 与Draw实际写入方法比较 (1, 1, 3, False)
+PASS 与Draw实际写入方法比较 (3, 2, 1, False)
+PASS 与Draw实际写入方法比较 (8, -2, 3, True)
+PASS 写入失败恢复不存在条目
+PASS 写入失败恢复已有最高与待播
+PASS 无新增星时补旧集合并保存
+PASS TBC不记录星级或通关
+PASS 普通首胜奖励与复胜分流 False
+PASS 普通等待星动画完成 False
+PASS 普通动画完成开放表现 False
+PASS 首胜复胜普通DeepLink消费 False/False
+PASS 星保存→面板消费→进度保存 False/False
+PASS 消费与通关最终JSON状态 False/False
+PASS 普通首胜奖励与复胜分流 True
+PASS 普通等待星动画完成 True
+PASS 普通动画完成开放表现 True
+PASS 首胜复胜普通DeepLink消费 False/True
+PASS 星保存→面板消费→进度保存 False/True
+PASS 消费与通关最终JSON状态 False/True
+PASS DeepLink等待星动画完成 False
+PASS DeepLink动画完成开放导航 False
+PASS 首胜复胜普通DeepLink消费 True/False
+PASS 星保存→面板消费→进度保存 True/False
+PASS 消费与通关最终JSON状态 True/False
+PASS DeepLink等待星动画完成 True
+PASS DeepLink动画完成开放导航 True
+PASS 首胜复胜普通DeepLink消费 True/True
+PASS 星保存→面板消费→进度保存 True/True
+PASS 消费与通关最终JSON状态 True/True
+PASS 面板创建失败前已持久待播 False
+PASS 后续面板读取保留待播而非重新计算 False
+PASS 面板创建失败前已持久待播 True
+PASS 后续面板读取保留待播而非重新计算 True
+PASS 缺星组仍消费与Draw相同 False
+PASS 普通缺星组解除门禁
+PASS 缺星组仍消费与Draw相同 True
+PASS DeepLink缺星组解除门禁
+PASS 普通消费失败保留磁盘原记录/内存删除
+PASS DeepLink消费失败保留磁盘原记录/内存删除
+PASS 普通待播钳制并保留其它关卡
+PASS 普通重复配置不重复播放
+PASS 普通重新创建无新增星
+PASS DeepLink负待播钳制无动画
+PASS DeepLink空配置不消费
+PASS 后续RecordVictory不重写失败星级
+PASS 动画途中关闭不恢复已消费记录/晚回调拒绝
+PASS Dig全链不修改Draw存档
+PASS 与Draw实际消费方法比较 (0, )/deep=False/save=False
+PASS 与Draw实际消费方法比较 (0, )/deep=False/save=True
+PASS 与Draw实际消费方法比较 (0, )/deep=True/save=False
+PASS 与Draw实际消费方法比较 (0, )/deep=True/save=True
+PASS 与Draw实际消费方法比较 (0, 3)/deep=False/save=False
+PASS 与Draw实际消费方法比较 (0, 3)/deep=False/save=True
+PASS 与Draw实际消费方法比较 (0, 3)/deep=True/save=False
+PASS 与Draw实际消费方法比较 (0, 3)/deep=True/save=True
+PASS 与Draw实际消费方法比较 (1, 1)/deep=False/save=False
+PASS 与Draw实际消费方法比较 (1, 1)/deep=False/save=True
+PASS 与Draw实际消费方法比较 (1, 1)/deep=True/save=False
+PASS 与Draw实际消费方法比较 (1, 1)/deep=True/save=True
+PASS 与Draw实际消费方法比较 (3, 2)/deep=False/save=False
+PASS 与Draw实际消费方法比较 (3, 2)/deep=False/save=True
+PASS 与Draw实际消费方法比较 (3, 2)/deep=True/save=False
+PASS 与Draw实际消费方法比较 (3, 2)/deep=True/save=True
+PASS 与Draw实际消费方法比较 (2, 99)/deep=False/save=False
+PASS 与Draw实际消费方法比较 (2, 99)/deep=False/save=True
+PASS 与Draw实际消费方法比较 (2, 99)/deep=True/save=False
+PASS 与Draw实际消费方法比较 (2, 99)/deep=True/save=True
+PASS 与Draw实际消费方法比较 (2, -1)/deep=False/save=False
+PASS 与Draw实际消费方法比较 (2, -1)/deep=False/save=True
+PASS 与Draw实际消费方法比较 (2, -1)/deep=True/save=False
+PASS 与Draw实际消费方法比较 (2, -1)/deep=True/save=True
+PASS 与Draw实际消费方法比较 (8, 5)/deep=False/save=False
+PASS 与Draw实际消费方法比较 (8, 5)/deep=False/save=True
+PASS 与Draw实际消费方法比较 (8, 5)/deep=True/save=False
+PASS 与Draw实际消费方法比较 (8, 5)/deep=True/save=True
+PASS 实际生成器预览与新增属性/初始化一致
+TOTAL 89 assertions; actual methods/JSON/generator, UI/storage backend simulated

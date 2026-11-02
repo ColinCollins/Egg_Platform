@@ -1,0 +1,19 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Game.Dig;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+public static class MultiActorRunner
+{
+    public static void Run()
+    {
+        try
+        {
+            var stage=PrefabStageUtility.OpenPrefab("Assets/Game/Prefabs/DigLevel/DigLevel_003.prefab");var level=stage.prefabContentsRoot.GetComponent<DigLevelCtrl>();var binding=new SerializedObject(level);var first=binding.FindProperty("actor").objectReferenceValue as DigActorCtrl;var placed=stage.prefabContentsRoot.GetComponentsInChildren<DigActorCtrl>(true).OrderBy(x=>x==first?0:1).ThenBy(x=>x.Index).ToArray();if(placed.Length!=2)throw new Exception("003参与角色数量已变化，需重新核对");var list=binding.FindProperty("actors");list.arraySize=placed.Length;for(int i=0;i<placed.Length;i++)list.GetArrayElementAtIndex(i).objectReferenceValue=placed[i];binding.ApplyModifiedPropertiesWithoutUndo();EditorUtility.SetDirty(level);EditorSceneManager.MarkSceneDirty(stage.scene);typeof(PrefabStage).GetMethod("SavePrefab",BindingFlags.Instance|BindingFlags.NonPublic,null,Type.EmptyTypes,null).Invoke(stage,null);StageUtility.GoToMainStage();EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);new GameObject("多角色行为验证").AddComponent<MultiActorProbe>();EditorApplication.isPlaying=true;
+        }
+        catch(Exception e){File.WriteAllText("C:/Users/admin/AppData/Local/Temp/brainpunk-multi-actors-20261013/failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}
+    }
+}

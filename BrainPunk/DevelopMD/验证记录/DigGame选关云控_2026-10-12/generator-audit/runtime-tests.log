@@ -1,0 +1,52 @@
+PASS: 独立 Global 默认开关/价格
+PASS: 本地区间含上界且分档
+PASS: Dig 不读取 Draw key
+PASS: 远端优先与单字段本地兜底
+PASS: 类型解析失败本地兜底
+PASS: 沿用 Draw 非正数语义：免费价格/无冷却/关闭自动弹窗
+PASS: 非法区间优先回退远端单值
+PASS: 无效 JSON 本地兜底
+PASS: 实际 Luban 表初始化
+PASS: 30 普通关和末尾 TBC
+PASS: 排序连续且 TBC=31
+PASS: 真实生成墨水 schema
+PASS: TBC 真实表资源
+PASS: 末尾普通关解锁 TBC 条件
+PASS: 绑定身份有效
+PASS: 拒绝无效远端候选 {}broken
+PASS: 拒绝无效远端候选 {"enabled":1}
+PASS: 拒绝无效远端候选 {"enabled":true}
+PASS: 拒绝无效远端候选 {"enabled":true,"level_sort":[]}
+PASS: 拒绝无效远端候选 {"enabled":true,"level_sort":[40001,40001]}
+PASS: 拒绝无效远端候选 {"enabled":true,"level_sort":[49999]}
+PASS: 拒绝无效远端候选 {"enabled":true,"level_sort":[40999]}
+PASS: 拒绝无效远端候选 {"enabled":true,"level_sort":[true]}
+PASS: 远端重排/TBC 末尾只追加一次
+PASS: 关闭远端排序回退本地
+PASS: 首胜保存独立进度
+PASS: 顺序解锁下一关
+PASS: 重复胜利最高星不降低
+PASS: TBC 不写普通成功或星级
+PASS: OneLink 首未通过关回退
+PASS: 旧档补统计集合保留进度
+PASS: 广告/暂停/转场延迟 Dig 候选
+PASS: Dig 延迟不阻断其它 key 保存
+PASS: 门禁未解除不提交
+PASS: 安全后缓存与排序同轮提交并刷新
+PASS: 旧广告/选关身份被拒绝
+PASS: 未知 ID 保留旧缓存和序列
+PASS: 落盘失败不切换列表
+PASS: 同序列参数更新不增加版本
+PASS: 最新候选待提交
+PASS: 新回调等于当前缓存可撤销旧候选
+PASS: 四玩法开始和货币上下文
+PASS: Reset 先 revive 再失败并记录时长
+PASS: Reset 清本次时长再 start
+PASS: 同关失败累计 revive 与时长
+PASS: 成功前累计且身份不被重排改写
+PASS: 派生事件真实 ID 与 b_play 四玩法累计
+PASS: Replay 增进入次数/类型
+PASS: Replay 清 revive/时长，退出成对上报
+PASS: 重复退出不重报
+PASS: TBC 开始/Reset/退出无普通成功
+PASS 51 assertions; actual config/save/analytics and RemoteConfig commit bodies; Unity/SDK/cache backend simulated.

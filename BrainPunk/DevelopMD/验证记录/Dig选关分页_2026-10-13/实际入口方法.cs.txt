@@ -1,0 +1,17 @@
+using Bear.Logger;public partial class HomeHarness{private void Enter(CustomButton button)
+    {
+        if (!GameManager.Instance.TryEnterDig(out string error)) this.LogError($"[DigGameEnter] {error}");
+    }}public partial class ExitHarness{public void ExitToLevelSelection()
+    {
+        if (!IsActive) return;
+        bool restoreChoice = _runtime != null || _instance || _hud || _transitioning;
+        if (!GameManager.Instance.ReturnToStartPanel(out string error)) { this.LogError($"[Dig] 返回首页失败：{error}"); return; }
+        if (restoreChoice) GameManager.Instance.TryEnterDig(out error);
+    }}public partial class GameManager{public bool TryEnterDig(out string error)
+    {
+        error = null;
+        if (ControllerManager == null || DigGameLevel?.IsReady != true || !Game.ConfigModule.ConfigManager.RemoteConfig.GetDigGameIsOpen())
+        { error = "Dig 未准备好或已关闭。"; return false; }
+        if (!ControllerManager.TryEnter(new PlayEntryRequest(PlayModeType.Dig), out error)) return false;
+        return true;
+    }}

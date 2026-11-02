@@ -1,0 +1,71 @@
+using System;
+using System.IO;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using Game.Scripts.Effects;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+public sealed class NativeSandPlayVerification:MonoBehaviour
+{
+ const string Output="C:/Users/admin/AppData/Local/Temp/brainpunk-dig-compress-20261013/";
+ readonly List<string> checks=new List<string>();
+ void Set(object target,string name,object value)=>target.GetType().GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).SetValue(target,value);
+ IEnumerator Start()
+ {
+#if UNITY_EDITOR
+  var rp=AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/UniversalRP.asset");GraphicsSettings.defaultRenderPipeline=rp;QualitySettings.renderPipeline=rp;
+  var cameraObject=new GameObject("NativeGameCamera");var c=cameraObject.AddComponent<Camera>();c.orthographic=true;c.orthographicSize=5;c.transform.position=new Vector3(0,0,-20);c.clearFlags=CameraClearFlags.SolidColor;c.backgroundColor=Color.clear;c.allowHDR=false;c.allowMSAA=false;
+  c.targetTexture=new RenderTexture(640,360,0,RenderTextureFormat.ARGB32,RenderTextureReadWrite.Linear);c.targetTexture.Create();
+  yield return null;yield return null;
+  var go=new GameObject("Sand");go.SetActive(false);var sr=go.AddComponent<SpriteRenderer>();sr.sprite=AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Actual/Sp_wd_tk_02.png");sr.drawMode=SpriteDrawMode.Sliced;sr.size=new Vector2(17.7f,7.2f);go.transform.position=new Vector3(0,-0.45f,10);
+  var mask=AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Game/Prefabs/DigLevel/Maps/DigLevel_001_MapMask.png");
+  var visual=go.AddComponent<SceneSpriteBrushClear>();Set(visual,"inputCamera",c);Set(visual,"enableMouse",false);Set(visual,"enableTouch",false);Set(visual,"initialMask",mask);Set(visual,"displayMaterial",AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Prefabs/DigLevel/Maps/DigLevel_001_MapPreview.mat"));Set(visual,"stampShader",AssetDatabase.LoadAssetAtPath<Shader>("Assets/Game/ArtSrc/Shader/Sprites/MaskRTStamp.shader"));go.SetActive(true);
+  yield return null;yield return null;
+  foreach(var size in new[]{new Vector2Int(640,360),new Vector2Int(1280,720),new Vector2Int(3088,1440)})
+  foreach(bool letterbox in new[]{false,true})
+  {
+   c.targetTexture.Release();c.targetTexture=new RenderTexture(size.x,size.y,0,RenderTextureFormat.ARGB32,RenderTextureReadWrite.Linear);c.targetTexture.Create();c.rect=letterbox?new Rect(0,0.12f,1,0.76f):new Rect(0,0,1,1);
+   sr.sharedMaterial.SetFloat("_InnerOutlineWidth",0);sr.sharedMaterial.SetFloat("_OuterOutlineWidth",0);
+   yield return null;yield return null;yield return null;
+   var old=RenderTexture.active;RenderTexture.active=c.targetTexture;var texture=new Texture2D(size.x,size.y,TextureFormat.RGBA32,false,true);texture.ReadPixels(new Rect(0,0,size.x,size.y),0,0);texture.Apply();RenderTexture.active=old;
+   File.WriteAllBytes(Output+"native-play-"+size.x+"-"+letterbox+".png",texture.EncodeToPNG());
+   int bad=0,count=0;Rect viewport=c.pixelRect;
+   for(int y=(int)viewport.yMin+20;y<viewport.yMax-20;y+=23)for(int x=(int)viewport.xMin+20;x<viewport.xMax-20;x+=23)
+   {
+    Vector3 world=c.ViewportToWorldPoint(new Vector3((x+0.5f-viewport.xMin)/viewport.width,(y+0.5f-viewport.yMin)/viewport.height,30));Vector3 local=sr.transform.InverseTransformPoint(world);Bounds b=sr.localBounds;float u=(local.x-b.min.x)/b.size.x,v=(local.y-b.min.y)/b.size.y;
+    if(u<0.02f||u>0.98f||v<0.1f||v>0.9f)continue;float r=mask.GetPixelBilinear(u,v).r;float eps=2f/viewport.height*10/7.2f;bool stable=true;
+    foreach(var o in new[]{new Vector2(-eps,0),new Vector2(eps,0),new Vector2(0,-eps),new Vector2(0,eps)})if(Math.Abs(mask.GetPixelBilinear(u+o.x,v+o.y).r-r)>0.02f)stable=false;
+    if(!stable)continue;count++;if(Math.Abs(texture.GetPixel(x,y).a-(1-r))>0.025f)bad++;
+   }
+   var rect=sr.sharedMaterial.GetVector("_SpriteLocalRect");string line=size+" viewport="+c.pixelRect+" cameraAspect="+c.aspect+" bounds="+sr.localBounds+" matRect="+rect+" samples="+count+" bad="+bad;
+   checks.Add(line);File.WriteAllLines(Output+"native-play-checks.txt",checks);
+   if(count<50||bad>0){Debug.LogError("NATIVE_SAND_FAIL "+line);EditorApplication.Exit(1);yield break;}
+  }
+  sr.size=new Vector2(17.7f,8.8f);visual.ResetAll();
+  var resetRect=sr.sharedMaterial.GetVector("_SpriteLocalRect");
+  checks.Add("播放态Size改变后ResetAll：实际Height="+sr.localBounds.size.y+"，材质Height="+resetRect.w);
+  File.WriteAllLines(Output+"native-play-checks.txt",checks);
+  if(Mathf.Abs(resetRect.w-sr.localBounds.size.y)>0.001f){Debug.LogError("NATIVE_RESET_GEOMETRY_FAIL actual="+sr.localBounds.size.y+" shader="+resetRect.w);EditorApplication.Exit(1);yield break;}
+  var fields=typeof(SceneSpriteBrushClear);
+  var oldValid=fields.GetField("_valid",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(visual);
+  var oldRT=visual.MaskTexture;var oldColor=sr.sharedMaterial.GetColor("_OutlineColor");visual.ResetAll();
+  if(!ReferenceEquals(oldValid,fields.GetField("_valid",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(visual))||oldRT!=visual.MaskTexture||sr.sharedMaterial.GetColor("_OutlineColor")!=oldColor){Debug.LogError("RESET_STABLE_STATE_FAIL");EditorApplication.Exit(1);yield break;}
+  checks.Add("无几何变化Reset复用CPU位图／RT并保留风格");
+  sr.drawMode=SpriteDrawMode.Simple;visual.ResetAll();
+  if(sr.sharedMaterial.GetFloat("_UseSpriteSliced")!=0||Mathf.Abs(sr.sharedMaterial.GetVector("_SpriteLocalRect").w-sr.sprite.bounds.size.y)>0.001f){Debug.LogError("RESET_SIMPLE_FAIL");EditorApplication.Exit(1);yield break;}
+  checks.Add("播放中切回Simple后Reset同步模式与原图矩形");
+  var newTexture=new Texture2D(32,32,TextureFormat.RGBA32,false,true);newTexture.SetPixels(System.Linq.Enumerable.Repeat(Color.white,1024).ToArray());newTexture.Apply();
+  sr.sprite=Sprite.Create(newTexture,new Rect(0,0,32,32),new Vector2(0.2f,0.7f),32,0,SpriteMeshType.FullRect,new Vector4(8,8,8,8));sr.drawMode=SpriteDrawMode.Sliced;sr.size=new Vector2(3,2);visual.ResetAll();
+  if(sr.sharedMaterial.GetFloat("_UseSpriteSliced")!=1||Mathf.Abs(sr.sharedMaterial.GetVector("_SpriteBorderLocal").w-0.25f)>0.001f||fields.GetField("_sprite",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(visual)!=sr.sprite){Debug.LogError("RESET_SPRITE_BORDER_FAIL");EditorApplication.Exit(1);yield break;}
+  checks.Add("播放中换Sprite／Border／Size后Reset同步所有几何");
+  File.WriteAllLines(Output+"native-play-checks.txt",checks);Debug.Log("NATIVE_SAND_PASS="+checks.Count);EditorApplication.Exit(0);
+#endif
+ }
+}
+

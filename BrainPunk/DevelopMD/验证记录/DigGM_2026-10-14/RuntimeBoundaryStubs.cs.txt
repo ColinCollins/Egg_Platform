@@ -1,0 +1,4 @@
+using System;using UnityEngine;
+namespace Game.Dig {public sealed class DigTerrainCtrl:MonoBehaviour {public bool NewSand=true;public int Flushes;public float StrokeStep=>.075f;public void BindRuntime(){}public bool ContainsPoint(Vector2 p)=>true;public bool Stamp(Vector2 p)=>NewSand;public void FlushCollider(){Flushes++;}}}
+namespace UnityEngine.EventSystems {public class EventSystem:MonoBehaviour {public static EventSystem current;public bool IsPointerOverGameObject(int id)=>false;}}
+namespace Sirenix.OdinInspector {public enum ButtonSizes{Large};public class LabelTextAttribute:Attribute{public LabelTextAttribute(string s){}}public class ButtonAttribute:Attribute{public ButtonAttribute(string s,ButtonSizes b){}}public class DisableInPlayModeAttribute:Attribute{}}

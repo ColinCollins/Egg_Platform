@@ -1,0 +1,42 @@
+using Bear.Logger; using Config; public partial class DigGameLevelCtrl {
+    public bool TryUnlockAllLevels(out int addedCount)
+    {
+        addedCount = 0;
+        if (!IsReady || _levelSorts.Count == 0)
+        {
+            this.LogWarning(
+                "[DigGameLevelCtrl] Unlock all levels skipped because the controller is not ready.");
+            return false;
+        }
+
+        Bear.SaveModule.DigGame saveData = DB.DigGame;
+        if (saveData == null)
+        {
+            this.LogWarning(
+                "[DigGameLevelCtrl] Unlock all levels skipped because DB.DigGame is unavailable.");
+            return false;
+        }
+
+        bool changed = saveData.EnsureValidCollections();
+        for (int i = 0; i < _levelSorts.Count; i++)
+        {
+            DigLevelSort sortData = _levelSorts[i];
+            if (sortData == null ||
+                sortData.Id <= 0 ||
+                saveData.UnlockLevels.Contains(sortData.Id))
+            {
+                continue;
+            }
+
+            saveData.UnlockLevels.Add(sortData.Id);
+            addedCount++;
+            changed = true;
+        }
+
+        if (!changed || DB.SaveDigGame())
+            return true;
+
+        this.LogWarning("[DigGameLevelCtrl] Failed to save unlocked DigGame levels.");
+        return false;
+    }
+}

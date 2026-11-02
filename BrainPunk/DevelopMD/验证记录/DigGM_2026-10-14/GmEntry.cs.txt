@@ -1,0 +1,2 @@
+using UnityEngine;using UnityEditor;using UnityEditor.SceneManagement;
+public static class GmEntry { public static void Run(){EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);new GameObject("GMVerification").AddComponent<DigGmVerification>();EditorApplication.isPlaying=true;} }

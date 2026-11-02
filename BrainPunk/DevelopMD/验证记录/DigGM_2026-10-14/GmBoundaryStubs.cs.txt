@@ -1,0 +1,74 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Game.Dig;
+using UnityEngine;
+namespace Config { public class DigLevelSort { public int Id; public string Path; } public class DigLevelData { public string Id, Path; } }
+namespace Config.Level { public enum GameType { Dig } }
+namespace Game.Play { public enum PlayModeType { Dig, Main } public interface IPlayController { PlayModeType Mode { get; } } }
+namespace Bear.Logger { public static class ProbeLog { public static void Log(this object o,string s)=>Debug.Log(s); public static void LogWarning(this object o,string s)=>Debug.LogWarning(s); public static void LogError(this object o,string s)=>Debug.LogWarning(s); } }
+namespace Bear.SaveModule
+{
+    public class DigGame
+    {
+        public HashSet<int> UnlockLevels = new HashSet<int>(), PassedLevels = new HashSet<int>();
+        public Dictionary<string,int> Stars = new Dictionary<string,int>();
+        public int CurrentLevel;
+        public bool EnsureValidCollections() => false;
+    }
+}
+public static class DB { public static Bear.SaveModule.DigGame DigGame = new Bear.SaveModule.DigGame(); public static int Saves; public static bool SaveResult = true; public static bool SaveDigGame() { Saves++; return SaveResult; } }
+namespace Game { public class OneLinkManager { public static OneLinkManager Instance = new OneLinkManager(); public bool IsLinked; public int EndCalls, EntryCalls; public void EndEntry(Config.Level.GameType t) { EndCalls++; IsLinked=false; } public void OnLevelEntryStarted(Config.Level.GameType t) { EntryCalls++; } } }
+namespace Bear.UI { public class UIManager { public static UIManager Instance = new UIManager(); public DigGame_ChoiceLevelPanel Panel=new DigGame_ChoiceLevelPanel(); public T GetUI<T>() where T:class=>Panel as T; public void CloseUI(ProbeChoice choice) {} } }
+public class DigGame_ChoiceLevelPanel { public int RefreshCalls; public void RefreshRemoteConfig(){RefreshCalls++;} }
+public class CustomButton {}
+public class ProbeChoice : MonoBehaviour { public bool IsRewardAdPending; }
+public class ProbeHud : MonoBehaviour { public bool IsRewardAdRequesting; }
+public class ControllerManager { public Game.Play.IPlayController ActiveController; }
+public class GameManager
+{
+    public static GameManager Instance = new GameManager();
+    public DigGameLevelCtrl DigGameLevel;
+    public DrawGameLevelCtrl DrawGameLevel = new DrawGameLevelCtrl();
+    public IWannerGameLevelCtrl IWannerGameLevel = new IWannerGameLevelCtrl();
+    public ControllerManager ControllerManager = new ControllerManager();
+}
+public class LevelCtrl { public int Calls; public bool TryUnlockAllLevels(out int n) { Calls++; n=2; return true; } }
+public class DrawGameLevelCtrl : LevelCtrl {}
+public class IWannerGameLevelCtrl { public int Calls; public bool TryUnlockAllGroups(out int n) { Calls++; n=3; return true; } }
+public class PlayCtrl { public static PlayCtrl Instance = new PlayCtrl(); public LevelCtrl Level = new LevelCtrl(); }
+public partial class DigGameLevelCtrl
+{
+    public const string TbcDataId="40999";
+    public bool IsReady=true;
+    public readonly List<Config.DigLevelSort> _levelSorts=new List<Config.DigLevelSort>();
+    public IReadOnlyList<Config.DigLevelSort> LevelSorts=>_levelSorts;
+    public readonly Dictionary<string,Config.DigLevelData> Data=new Dictionary<string,Config.DigLevelData>();
+    public bool TryGetLevel(int id,out Config.DigLevelData data) { var sort=_levelSorts.Find(x=>x!=null&&x.Id==id); data=sort!=null&&Data.TryGetValue(sort.Path,out var d)?d:null; return data!=null; }
+}
+public static class GameSDKService { public const int LevelEndTypeExit=2; }
+public partial class DigPlayCtrl
+{
+    public bool IsInitialized=true, IsActive=true;
+    private IDigLevelRuntime _runtime;
+    private Config.DigLevelData _data;
+    private int _levelId;
+    private bool _transitioning,_paused,_resolved,_hintGranted=true,_rewardInkGranted=true;
+    private ProbeChoice _choice;
+    private ProbeHud _hud;
+    private bool IsTbc=>_data?.Id==DigGameLevelCtrl.TbcDataId;
+    public Game.Play.PlayModeType Mode=>Game.Play.PlayModeType.Dig;
+    public readonly List<string> Trace=new List<string>();
+    public int TransitionCalls;
+    public int CurrentId=>_levelId;
+    public bool HasSessions=>_hintGranted||_rewardInkGranted;
+    public void Setup(IDigLevelRuntime runtime,Config.DigLevelData data,int id,ProbeChoice choice,ProbeHud hud) { _runtime=runtime;_data=data;_levelId=id;_choice=choice;_hud=hud; }
+    private void ReportLevelEndAnalytics(int type)=>Trace.Add("exit:"+_data.Id);
+    private void StartNewLevelAnalytics()=>Trace.Add("start:"+_data.Id);
+    private void BeginTransition() { TransitionCalls++; _transitioning=true; _runtime.SetInputEnabled(false); _runtime.SetPaused(true); }
+}
+public class OtherGM : Game.Play.IPlayController, Game.Play.IGMFeature
+{
+    public int Calls; public Game.Play.PlayModeType Mode=>Game.Play.PlayModeType.Main;
+    public bool TryEnterNextLevel(){Calls++;return true;} public bool TryEnterPreviousLevel(){Calls++;return true;} public bool TryForceVictory(string s){Calls++;return true;}
+}

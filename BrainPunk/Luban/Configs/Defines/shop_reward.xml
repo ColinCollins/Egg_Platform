@@ -1,0 +1,8 @@
+<module name="">
+    <!-- Shop 专用有序奖励项，允许类型重复；分隔符兼容既有奖励单元格。 -->
+    <bean name="ShopReward" sep=";">
+        <var name="key" type="Game.GameProps" comment="奖励类型；同类型可配置多项"/>
+        <var name="value" type="ParamBase#sep=," comment="单项奖励参数；Skin 使用 StringParam 皮肤 ID"/>
+    </bean>
+</module>
+

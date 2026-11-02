@@ -1,0 +1,135 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using DG.Tweening;
+using Game.Dig;
+using Spine;
+using Spine.Unity;
+using UnityEngine;
+
+public sealed class DigSpineVerification : MonoBehaviour
+{
+    const string Output = "C:/Users/admin/AppData/Local/Temp/brainpunk-dig-spine-20261015/spine-checks.txt";
+    const string Art = "D:/GitStore/BrinPunk/BrainPunk/Assets/Game/ArtSrc/Spines/sp_boxRound_001/";
+    readonly List<string> checks = new List<string>();
+    GameObject live;
+    DigLevelCtrl level;
+    DigActorCtrl[] actors;
+    SkeletonAnimation[] skeletons;
+    DigGermCtrl germ;
+    SkeletonDataAsset data;
+    int results;
+    DigLevelResult result;
+    static void Set(object obj, string name, object value) => obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(obj, value);
+    static T Get<T>(object obj, string name) => (T)obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(obj);
+    static object Call(object obj, string name, params object[] args) => obj.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(obj, args);
+    void Check(bool pass, string name) { if (!pass) throw new Exception(name); checks.Add(name); Debug.Log("DIG_SPINE_CHECK " + checks.Count + " " + name); }
+    Transform Node(string name, Transform parent) { var go = new GameObject(name); go.transform.SetParent(parent, false); return go.transform; }
+    void Fresh(bool consume = false, int count = 1, bool withSpine = true, float delay = 0)
+    {
+        if (live) { live.SetActive(false); Destroy(live); }
+        live = new GameObject("SpineLevel"); results = 0;
+        level = live.AddComponent<DigLevelCtrl>();
+        var cam = Node("Camera", live.transform).gameObject.AddComponent<Camera>();
+        cam.enabled = false; cam.orthographic = true; cam.transform.position = new Vector3(0, 0, -20);
+        actors = new DigActorCtrl[count]; skeletons = new SkeletonAnimation[count];
+        for (int i = 0; i < count; i++)
+        {
+            var root = Node("Actor", live.transform); root.position = new Vector3(i * 3, 0, 0);
+            var rb = root.gameObject.AddComponent<Rigidbody2D>(); rb.gravityScale = 0; rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+            var circle = root.gameObject.AddComponent<CircleCollider2D>();
+            var body = Node("Body", root);
+            actors[i] = root.gameObject.AddComponent<DigActorCtrl>();
+            Set(actors[i], "body", body); Set(actors[i], "physicsBody", rb); Set(actors[i], "circle", circle);
+            if (withSpine)
+            {
+                var sa = SkeletonAnimation.AddToGameObject(body.gameObject, data);
+                sa.initialSkinName = i % 2 == 0 ? "Qboxy_original" : "Qboxy_pink"; sa.Initialize(true);
+                sa.enabled = false; // 手动推进真实 SkeletonAnimation，保持动画时序可重复。
+                var ctrl = root.gameObject.AddComponent<ActorSpineCtrl>(); Set(ctrl, "skeletonAnimation", sa);
+                Set(actors[i], "spineCtrl", ctrl); skeletons[i] = sa;
+            }
+        }
+        var gr = Node("Germ", live.transform); gr.position = new Vector3(12, 0, 0);
+        germ = gr.gameObject.AddComponent<DigGermCtrl>();
+        var grb = gr.gameObject.AddComponent<Rigidbody2D>(); grb.gravityScale = 0;
+        Set(germ, "body", Node("Body", gr)); Set(germ, "physicsBody", grb); Set(germ, "contactCollider", gr.gameObject.AddComponent<CircleCollider2D>());
+        Set(level, "inputCamera", cam); Set(level, "actors", actors); Set(level, "terrain", live.AddComponent<DigTerrainCtrl>());
+        Set(level, "germs", new[] { germ }); Set(level, "victoryCondition", consume ? DigVictoryCondition.ConsumeAllGerms : DigVictoryCondition.ReachTarget);
+        Set(level, "victoryDelay", delay);
+        level.InitializeRuntime(); level.SetPaused(false); level.SetInputEnabled(true);
+        level.Resolved += value => { results++; result = value; };
+    }
+    TrackEntry Track(int index = 0) => skeletons[index].AnimationState.GetCurrent(0);
+    string State(int index = 0) => Track(index).Animation.Name;
+    void Tick(float delta, int index = 0) => skeletons[index].Update(delta);
+    void Swallow()
+    {
+        level.QueueContact(actors[0], germ); Call(level, "FixedUpdate");
+        Get<Tween>(germ, "_animation").Complete(true);
+    }
+    IEnumerator Start()
+    {
+        Physics2D.simulationMode = SimulationMode2D.Script;
+        IEnumerator run = Verify();
+        while (true)
+        {
+            object wait;
+            try { if (!run.MoveNext()) break; wait = run.Current; }
+            catch (Exception ex) { File.WriteAllText(Output, string.Join("\n", checks) + "\nFAIL " + ex); Debug.LogException(ex); UnityEditor.EditorApplication.Exit(1); yield break; }
+            yield return wait;
+        }
+        File.WriteAllText(Output, string.Join("\n", checks) + "\nPASS " + checks.Count);
+        UnityEditor.EditorApplication.Exit(0);
+    }
+    IEnumerator Verify()
+    {
+        var tex = new Texture2D(2, 2) { name = "Qboxy_round" }; tex.LoadImage(File.ReadAllBytes(Art + "Qboxy_round.png"));
+        var mat = new Material(Shader.Find("Sprites/Default")) { mainTexture = tex, name = "Qboxy_round" };
+        var atlas = SpineAtlasAsset.CreateRuntimeInstance(new TextAsset(File.ReadAllText(Art + "Qboxy_round.atlas.txt")), new[] { mat }, true);
+        data = SkeletonDataAsset.CreateRuntimeInstance(new TextAsset(File.ReadAllText(Art + "Qboxy_round.json")), atlas, true);
+        float eatTime = data.GetSkeletonData(false).FindAnimation("eat").Duration;
+        float hiccupTime = data.GetSkeletonData(false).FindAnimation("hiccup").Duration;
+        Check(eatTime > 0 && hiccupTime > 0, "真实 Qboxy 动画已加载 eat=" + eatTime + " hiccup=" + hiccupTime);
+        Fresh();
+        Check(State() == "idle" && Track().Loop, "Bear FSM 默认 idle 循环，私有节点可实例化");
+        var rb = actors[0].GetComponent<Rigidbody2D>(); rb.linearVelocity = Vector2.right;
+        Call(actors[0], "Update"); Check(State() == "scroll", "锁旋转刚体按线速度进入 scroll");
+        var scroll = Track(); Tick(.05f); Call(actors[0], "Update"); Check(ReferenceEquals(scroll, Track()) && Track().TrackTime > 0, "持续移动不重播 scroll");
+        rb.linearVelocity = Vector2.right * .075f; Call(actors[0], "Update"); Check(State() == "scroll", "滚动阈值回差保留 scroll");
+        rb.linearVelocity = Vector2.zero; Call(actors[0], "Update"); Check(State() == "idle", "停止移动恢复 idle");
+        Call(level, "BeginStroke", Vector2.zero, -1); Call(actors[0], "Update"); Check(State() == "nervous" && Track().Loop, "ReachTarget 按住画线进入 nervous");
+        rb.linearVelocity = Vector2.right; Call(actors[0], "Update"); Check(State() == "scroll", "画线期间滚动优先于 nervous");
+        rb.linearVelocity = Vector2.zero; Call(actors[0], "Update"); Check(State() == "nervous", "仍按住时停止移动恢复 nervous");
+        Call(level, "EndStroke", false); Call(actors[0], "Update"); Check(State() == "idle", "松手退出 nervous");
+        level.QueueContact(actors[0], germ); Call(level, "FixedUpdate");
+        Check(State() == "eat" && !Track().Loop && germ.IsClaimed, "真实认领批次触发 eat 一次性动作");
+        var eat = Track(); Tick(eatTime * .25f); float ateAt = Track().TrackTime;
+        actors[0].Grow(0); Check(ReferenceEquals(eat, Track()) && Track().TrackTime == ateAt, "eat 期间再次吞噬不重置轨道、不排队");
+        level.SetPaused(true); Tick(eatTime * 2); Check(State() == "eat" && Track().TrackTime == ateAt, "菜单暂停冻结真实 Spine eat");
+        level.SetPaused(false); Tick(eatTime); Check(State() == "idle" && results == 0, "eat 完成恢复 idle，ReachTarget 吞噬不提前胜利");
+        Check(level.TryReachTarget(actors[0], 0) && results == 1 && State() != "hiccup", "ReachTarget 成功维持原流程，不播 hiccup");
+        Fresh(true, 2); Call(level, "BeginStroke", Vector2.zero, -1); Call(actors[0], "Update"); Check(State() == "idle", "吞噬玩法画线不触发 nervous");
+        Swallow(); Check(level.IsResultLocked && results == 0 && State() == "hiccup" && State(1) == "hiccup", "全部吃完锁玩法，全部参与角色播放 hiccup，零延迟仍等待");
+        Check(!level.TryFail() && !level.TryForceVictory() && !actors[0].GetComponent<Rigidbody2D>().simulated, "hiccup 中冻结物理并拒绝失败与重复胜利");
+        Tick(hiccupTime + .1f); Check(results == 0, "多角色等待最后一个 hiccup 完成");
+        level.SetPaused(true); float before = Track(1).TrackTime; Tick(hiccupTime + .1f, 1); Check(Track(1).TrackTime == before && results == 0, "胜利演出菜单暂停不会提前完成");
+        level.SetPaused(false); Call(level, "OnApplicationPause", true); Tick(hiccupTime + .1f, 1); Check(Track(1).TrackTime == before && results == 0, "后台暂停保持 hiccup 剩余进度");
+        Call(level, "OnApplicationPause", false); Tick(hiccupTime + .1f, 1); Check(results == 1 && result == DigLevelResult.Succeeded, "恢复后全部 hiccup 完成才一次提交成功");
+        Tick(hiccupTime * 2, 1); Check(results == 1, "一次性完成解绑，无重复结果");
+        Fresh(true, delay: .25f); Swallow(); Tick(hiccupTime + .1f); Check(results == 0, "hiccup 先完成仍保留原 victoryDelay 下限");
+        yield return new WaitForSeconds(.35f); Check(results == 1, "原延迟到期提交一次成功");
+        Fresh(true); Swallow(); level.enabled = false; Tick(hiccupTime + .1f); Check(results == 0, "仅关卡禁用也拒绝旧 Spine 完成回调");
+        Fresh(true); Swallow(); var old = actors[0]; live.SetActive(false); Check(Get<object>(old, "_oneShotTrack") == null && Get<object>(old, "_hiccupCompleted") == null, "退出解绑 Spine 轨道与胜利回调");
+        Fresh(true, withSpine: false); Swallow(); Check(results == 1, "旧无 Spine 角色仍可正常结算");
+        Fresh(true); Check(level.TryForceVictory() && results == 1 && State() == "idle", "GM 胜利不伪造吞噬 hiccup");
+        Fresh(true); Check(level.TryCompleteByHint() && results == 1, "提示跳关维持原胜利链");
+        Fresh(); actors[0].Grow(1); var body = Get<Transform>(actors[0], "body"); var scale = body.localScale;
+        Check(level.TryFail() && Get<object>(actors[0], "_oneShotTrack") == null, "失败清除 eat 回调并进入原死亡动作");
+        yield return new WaitForSeconds(.1f); Check(actors[0].transform.position.y > 0 && body.localScale == scale, "新增 Spine 后死亡仍上跳且保持尺寸");
+        yield return new WaitForSeconds(.75f); Check(results == 1 && result == DigLevelResult.Failed && actors[0].transform.position.y < -5, "死亡下坠离屏后正常失败结算");
+        foreach (string skin in new[] { "Qboxy_original", "Qboxy_pink", "Qboxy_bad" }) Check(data.GetSkeletonData(false).FindSkin(skin) != null, "资源包含皮肤 " + skin);
+    }
+}

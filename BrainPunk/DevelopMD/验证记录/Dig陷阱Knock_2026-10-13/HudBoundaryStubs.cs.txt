@@ -1,0 +1,28 @@
+using System;
+using UnityEngine;
+using Cysharp.Threading.Tasks;
+using Game.Dig;
+namespace Bear.UI
+{
+    public class BaseUIView : MonoBehaviour { public bool IsOpen { get; private set; } public virtual void OnCreate() {} public virtual void OnOpen() { IsOpen = true; } public virtual void OnClose() { IsOpen = false; } }
+    public enum UILayer { Normal }
+    public class UIManager { public static readonly UIManager Instance = new UIManager(); public T OpenUI<T>(string name, UILayer layer) where T : class => null; }
+}
+namespace Bear.EventSystem
+{
+    public interface IEventSender {}
+    public class Witness<T> where T : new() { public static readonly T _ = new T(); }
+    public static class EventExtensions { public static void DispatchEvent<T>(this IEventSender owner, T evt, params object[] args) {} }
+}
+namespace Config.Game { public enum GameResetType { Manually } public enum RewardPlacement { InGameTips } }
+namespace Game.Events { public class DigGameResetEvent {} public class GamePlayPanelSwitchTipsEvent {} }
+namespace Game.Play { public class BoundaryNamespace {} }
+public class CustomButton : MonoBehaviour { public event Action<CustomButton> OnClick; public bool Interactable; }
+public class DrawGame_InkProcessHandle : MonoBehaviour { public void ResetPresentation(){} public void Release(){} public void ConfigureStages(DrawInkState state){} public void SetRewardPresentationExpanded(bool b){} public void SetInkState(DrawInkState state, bool b){} }
+public class DigPlayCtrl { public int LevelVersion; public bool IsRewardInkGranted; public DrawInkState CurrentInkState; public void Resume(){} public void Pause(){} public bool TryBeginRewardInk()=>true; public bool TryGrantRewardInk()=>true; }
+public class GameManager { public static readonly GameManager Instance = new GameManager(); public readonly ControllerManager ControllerManager = new ControllerManager(); }
+public class ControllerManager { public object ActiveController; }
+public static class GameSettingPopup { public static object Create(bool b, DigPlayCtrl owner)=>null; }
+public static class ShopPanel { public static object Create(bool b,string source,DigPlayCtrl owner)=>null; }
+public static class DigGame_GameTipsPopup { public static object Create()=>null; }
+public static class RewardAdHelper { public static void TryToShowRewardAd(string placement, Action<string,bool> onResult){} }

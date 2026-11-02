@@ -1,0 +1,70 @@
+using Bear.Logger; using Bear.UI; using Config; using Game; using Game.Dig; using Game.Play; using UnityEngine;
+public partial class DigPlayCtrl : IGMFeature, IPlayController {
+    #region GM 关卡调试
+    /// <summary>GM 按当前有效排序进入下一关；末尾拒绝，不把当前关记为通关。</summary>
+    public bool TryEnterNextLevel() => TryEnterAdjacentLevel(1);
+
+    /// <summary>GM 按当前有效排序进入上一关；首关拒绝，不修改其它玩法的进度。</summary>
+    public bool TryEnterPreviousLevel() => TryEnterAdjacentLevel(-1);
+
+    /// <summary>GM 通过普通关的统一胜利入口结算，保留延迟、统计、广告及胜利界面；TBC 拒绝。</summary>
+    /// <param name="source">调试命令来源，仅用于日志，不改变关卡统计口径。</param>
+    public bool TryForceVictory(string source)
+    {
+        if (!CanExecuteGMCommand() || IsTbc || _runtime is not DigLevelCtrl level || !level.TryForceVictory())
+            return false;
+        this.Log($"[Dig] GM 胜利请求已接受。level:{_levelId}, source:{source}");
+        return true;
+    }
+
+    private bool CanExecuteGMCommand() => IsInitialized && CanInteract() && !_resolved &&
+        !IsRemoteConfigRefreshBlocked && (_runtime is not DigLevelCtrl level || !level.IsPaused);
+
+    private bool TryEnterAdjacentLevel(int direction)
+    {
+        var levels = GameManager.Instance?.DigGameLevel;
+        if (!CanExecuteGMCommand() || _data == null || levels?.IsReady != true || DB.DigGame == null)
+            return false;
+        int currentIndex = -1;
+        for (int i = 0; i < levels.LevelSorts.Count; i++)
+            if (levels.LevelSorts[i]?.Path == _data.Id) { currentIndex = i; break; }
+        int targetIndex = currentIndex + direction;
+        if (currentIndex < 0 || targetIndex < 0 || targetIndex >= levels.LevelSorts.Count)
+            return false;
+        DigLevelSort target = levels.LevelSorts[targetIndex];
+        if (target == null || !levels.TryGetLevel(target.Id, out _)) return false;
+        if (!TryEnterLevel(target.Id, true, out string error))
+        {
+            this.LogWarning($"[Dig] GM 切关请求被拒绝。level:{target.Id}, error:{error}");
+            return false;
+        }
+        DB.DigGame.CurrentLevel = target.Id;
+        if (!DB.SaveDigGame()) this.LogWarning($"[Dig] GM 当前关卡保存失败。level:{target.Id}");
+        OneLinkManager.Instance.EndEntry(Config.Level.GameType.Dig);
+        return true;
+    }
+    #endregion
+    internal bool TryEnterLevel(int levelId, bool allowLockedEntry, out string error)
+    {
+        error = null;
+        var levels = GameManager.Instance.DigGameLevel;
+        if (!IsActive || _transitioning || levels?.IsReady != true) { error = "Dig 入口状态不可用。"; return false; }
+        if (!levels.TryGetLevel(levelId, out var data)) { error = "Dig 目标配置无效。"; return false; }
+        if (!DB.DigGame.UnlockLevels.Contains(levelId))
+        {
+            if (!allowLockedEntry) { error = "Dig 目标未解锁。"; return false; }
+            DB.DigGame.UnlockLevels.Add(levelId);
+            if (!DB.SaveDigGame()) this.LogError("[Dig] 链接目标解锁保存失败。");
+        }
+        ReportLevelEndAnalytics(GameSDKService.LevelEndTypeExit);
+        _levelId = levelId; _data = data;
+        StartNewLevelAnalytics();
+        Game.OneLinkManager.Instance.OnLevelEntryStarted(Config.Level.GameType.Dig);
+        if (_choice) UIManager.Instance.CloseUI(_choice);
+        _rewardInkGranted = _hintGranted = false;
+        BeginTransition();
+        return true;
+    }
+    private bool CanInteract() => IsActive && !_transitioning && !_paused && _runtime?.IsRuntimeReady == true && !_runtime.IsResultLocked;
+    internal bool IsRemoteConfigRefreshBlocked => IsActive && (_transitioning || _paused || _choice?.IsRewardAdPending == true || _hud?.IsRewardAdRequesting == true);
+}

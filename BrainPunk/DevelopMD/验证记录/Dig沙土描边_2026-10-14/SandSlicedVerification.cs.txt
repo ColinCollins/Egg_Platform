@@ -1,0 +1,105 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using Game.Dig;
+using Game.Scripts.Effects;
+
+public static class SandSlicedVerification
+{
+    const string Output="C:/Users/admin/AppData/Local/Temp/brainpunk-dig-compress-20261013/";
+    const BindingFlags Flags=BindingFlags.Instance|BindingFlags.NonPublic;
+    static readonly List<string> Checks=new List<string>();
+    static void Check(bool ok,string label){if(!ok)throw new Exception(label);Checks.Add("通过："+label);}
+    static void Set(object target,string name,object value)=>target.GetType().GetField(name,Flags).SetValue(target,value);
+    static T Get<T>(object target,string name)=>(T)target.GetType().GetField(name,Flags).GetValue(target);
+    static void Call(object target,string method)=>target.GetType().GetMethod(method,Flags).Invoke(target,null);
+    static Texture2D Render(SpriteRenderer sr,Camera camera,RenderTexture target,string name,bool urp=false)
+    {
+        camera.targetTexture=target;
+        if(urp)RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});
+        else camera.Render();
+        var old=RenderTexture.active;RenderTexture.active=target;
+        var result=new Texture2D(target.width,target.height,TextureFormat.RGBA32,false,true);
+        result.ReadPixels(new Rect(0,0,target.width,target.height),0,0);result.Apply();RenderTexture.active=old;
+        File.WriteAllBytes(Output+"slice-"+name+".png",result.EncodeToPNG());return result;
+    }
+    public static void Run()
+    {
+        try
+        {
+            GraphicsSettings.defaultRenderPipeline=null;QualitySettings.renderPipeline=null;
+            var shader=AssetDatabase.LoadAssetAtPath<Shader>("Assets/Game/ArtSrc/Shader/Sprites/DigSand.shader");
+            Check(shader&&shader.isSupported&&!ShaderUtil.ShaderHasError(shader),"Sliced Shader编译支持");
+            var texture=new Texture2D(64,64,TextureFormat.RGBA32,false,true){filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
+            Color[] palette={Color.red,Color.green,Color.blue,Color.yellow,Color.white,Color.cyan,Color.magenta,new Color(1,0.5f,0),Color.gray};
+            var colors=new Color[64*64];for(int y=0;y<64;y++)for(int x=0;x<64;x++){int sx=x<16?0:x>=48?2:1;int sy=y<16?0:y>=48?2:1;colors[y*64+x]=palette[sy*3+sx];}texture.SetPixels(colors);texture.Apply();
+            var sprite=Sprite.Create(texture,new Rect(0,0,64,64),new Vector2(0.5f,0.5f),64,0,SpriteMeshType.FullRect,new Vector4(16,16,16,16));
+            var root=new GameObject("九宫格");root.SetActive(false);var sr=root.AddComponent<SpriteRenderer>();sr.sprite=sprite;sr.drawMode=SpriteDrawMode.Sliced;sr.size=new Vector2(3,2);
+            var baseline=new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/Game/ArtSrc/Shader/Sprites/MaskRTSprite.shader"));
+            var material=new Material(shader);material.SetFloat("_InnerOutlineWidth",0);material.SetFloat("_OuterOutlineWidth",0);material.SetFloat("_NoiseStrength",0);material.SetFloat("_NoiseOpacity",0);
+            SceneSpriteBrushClear.ApplySpriteGeometryToMaterial(material,sr);
+            var cameraObject=new GameObject("Slice相机");var camera=cameraObject.AddComponent<Camera>();camera.orthographic=true;camera.orthographicSize=1.5f;camera.transform.position=new Vector3(0,0,-10);camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.clear;camera.allowHDR=false;camera.allowMSAA=false;
+            var rt=new RenderTexture(384,256,0,RenderTextureFormat.ARGB32,RenderTextureReadWrite.Linear);rt.Create();root.SetActive(true);
+            sr.sharedMaterial=baseline;var expected=Render(sr,camera,rt,"native").GetPixels32();sr.sharedMaterial=material;var actual=Render(sr,camera,rt,"size3x2").GetPixels32();
+            Check(Enumerable.Range(0,expected.Length).Count(i=>!expected[i].Equals(actual[i]))<20,"3x2九宫格颜色与原生Sliced逐像素对齐");
+            Check(material.GetFloat("_UseSpriteSliced")==1&&material.GetVector("_SpriteLocalRect").z==3&&material.GetVector("_SpriteLocalRect").w==2,"实际Size矩形参数");
+            sr.size=new Vector2(0.35f,0.4f);SceneSpriteBrushClear.ApplySpriteGeometryToMaterial(material,sr);
+            sr.sharedMaterial=baseline;expected=Render(sr,camera,rt,"native-small").GetPixels32();sr.sharedMaterial=material;actual=Render(sr,camera,rt,"small").GetPixels32();
+            Check(Enumerable.Range(0,expected.Length).Count(i=>!expected[i].Equals(actual[i]))<20,"Size小于Border总和与原生切片对齐");
+            sr.size=new Vector2(3,2);root.transform.localScale=new Vector3(1.2f,0.8f,1);SceneSpriteBrushClear.ApplySpriteGeometryToMaterial(material,sr);
+            sr.sharedMaterial=baseline;expected=Render(sr,camera,rt,"native-scaled").GetPixels32();sr.sharedMaterial=material;actual=Render(sr,camera,rt,"scaled").GetPixels32();
+            Check(Enumerable.Range(0,expected.Length).Count(i=>!expected[i].Equals(actual[i]))<20,"非等比Scale切片颜色仍对齐");
+            root.transform.localScale=Vector3.one;
+            sr.sprite=Sprite.Create(texture,new Rect(0,0,64,64),new Vector2(0.2f,0.7f),64,0,SpriteMeshType.FullRect,new Vector4(16,16,16,16));SceneSpriteBrushClear.ApplySpriteGeometryToMaterial(material,sr);
+            sr.sharedMaterial=baseline;expected=Render(sr,camera,rt,"native-pivot").GetPixels32();sr.sharedMaterial=material;actual=Render(sr,camera,rt,"pivot").GetPixels32();
+            Check(Enumerable.Range(0,expected.Length).Count(i=>!expected[i].Equals(actual[i]))<20,"非中心pivot切片仍对齐");
+            sr.sprite=sprite;SceneSpriteBrushClear.ApplySpriteGeometryToMaterial(material,sr);
+            var mask=new Texture2D(256,256,TextureFormat.RGBA32,false,true){filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
+            var maskPixels=new Color[256*256];for(int y=0;y<256;y++)for(int x=0;x<256;x++){float lx=(x+0.5f)/256*3-1.5f,ly=(y+0.5f)/256*2-1;bool erased=(new Vector2(lx+1.25f,ly)).sqrMagnitude<0.32f*0.32f;maskPixels[y*256+x]=erased?Color.white:Color.black;}mask.SetPixels(maskPixels);mask.Apply();material.SetTexture("_MaskTex",mask);
+            var cut=Render(sr,camera,rt,"single-hole");
+            Check(cut.GetPixel(85,128).a<0.05f&&cut.GetPixel(120,128).a>0.95f&&cut.GetPixel(192,128).a>0.95f,"跨左边框分界仅一个洞，不向中心重复");
+            material.SetFloat("_InnerOutlineWidth",3);material.SetFloat("_OuterOutlineWidth",5);
+            var edged=Render(sr,camera,rt,"both-outline");
+            Check(edged.GetPixel(192,128).a>0.95f&&edged.GetPixel(85,128).a<0.05f,"内外描边保留洞中心与实心中心");
+            Check(edged.GetPixel(60,190).a>0&&edged.GetPixel(55,190).a==0,"Sliced矩形外扩约5px");
+            var rp=AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/UniversalRP.asset");GraphicsSettings.defaultRenderPipeline=rp;QualitySettings.renderPipeline=rp;
+            var urp=Render(sr,camera,rt,"urp",true);
+            Check(urp.GetPixel(60,190).a>0&&urp.GetPixel(85,128).a<0.05f,"URP17 Sliced外扩与跨分界洞");
+            GraphicsSettings.defaultRenderPipeline=null;QualitySettings.renderPipeline=null;
+            root.SetActive(false);var visual=root.AddComponent<SceneSpriteBrushClear>();Set(visual,"_sr",sr);Set(visual,"_sprite",sprite);Set(visual,"inputCamera",camera);Set(visual,"displayMaterial",material);Set(visual,"stampShader",AssetDatabase.LoadAssetAtPath<Shader>("Assets/Game/ArtSrc/Shader/Sprites/MaskRTStamp.shader"));
+            var centerScreen=camera.WorldToScreenPoint(root.transform.TransformPoint(sr.localBounds.center));
+            Check(visual.TryGetSpriteUV(centerScreen,camera,out var uv)&&Vector2.Distance(uv,new Vector2(0.5f,0.5f))<0.0001f,"真实屏幕输入按Sliced矩形归一");
+            Check(Mathf.Abs((float)typeof(SceneSpriteBrushClear).GetMethod("GetAspect",Flags).Invoke(visual,null)-1.5f)<0.0001f,"Sliced笔刷宽高比按3x2");
+            Call(visual,"EnsureMaterials");Call(visual,"EnsureMaskRT");Call(visual,"BuildProgressMasks");visual.ResetAll();
+            visual.StampEraseAt(new Vector2(0.5f,0.5f),new Vector2(0.2f,0.3f));
+            var maskRT=visual.MaskTexture;var previous=RenderTexture.active;RenderTexture.active=maskRT;var read=new Texture2D(maskRT.width,maskRT.height,TextureFormat.RGBA32,false,true);read.ReadPixels(new Rect(0,0,read.width,read.height),0,0);read.Apply();RenderTexture.active=previous;
+            Check(read.GetPixel(read.width/2,read.height/2).r>0.9f&&read.GetPixel(10,10).r<0.1f,"实际GPU盖章仍为线性矩形遮罩");
+            Check(visual.GetProgress()>0,"Sliced CPU进度实际盖章");
+            for(int y=0;y<64;y++)for(int x=0;x<16;x++){var color=colors[y*64+x];color.a=0;colors[y*64+x]=color;}
+            texture.SetPixels(colors);texture.Apply();Call(visual,"BuildProgressMasks");
+            float validRatio=Get<int>(visual,"_validCount")/(float)Get<bool[]>(visual,"_valid").Length;
+            Check(Mathf.Abs(validRatio-11f/12f)<0.015f,"透明左边框CPU有效像素按实际切片宽度采样");
+            // 仅在TEMP原生关卡上烘焙，不保存生产Prefab。
+            var level=PrefabUtility.LoadPrefabContents("Assets/Game/Prefabs/DigLevel/DigLevel_002.prefab");
+            try
+            {
+                var terrain=level.GetComponent<DigTerrainCtrl>();var sand=Get<SpriteRenderer>(terrain,"sandSprite");var sandVisual=Get<SceneSpriteBrushClear>(terrain,"visual");
+                Set(sandVisual,"displayShader",shader);
+                sand.sprite=sprite;sand.drawMode=SpriteDrawMode.Sliced;sand.size=new Vector2(3,2);sand.transform.localScale=Vector3.one;
+                terrain.InitMapFromPrefabAsset("Assets/Game/Prefabs/DigLevel/DigLevel_002.prefab");
+                Check(sand.sharedMaterial.GetFloat("_UseSpriteSliced")==1&&sand.sharedMaterial.GetVector("_SpriteLocalRect").z==3,"InitMap保存Sliced实际几何");
+                Check(sandVisual.InitialMask&&Get<bool>(terrain,"mapBaked"),"Sliced地图烘焙与遮罩资产");
+            }
+            finally{PrefabUtility.UnloadPrefabContents(level);}
+            File.WriteAllLines(Output+"sand-sliced-checks.txt",Checks);Debug.Log("SAND_SLICED_PASS="+Checks.Count);SandDualOutlineVerification.Run();
+        }
+        catch(Exception e){File.WriteAllLines(Output+"sand-sliced-checks.txt",Checks);Debug.LogException(e);EditorApplication.Exit(1);}
+    }
+}
+

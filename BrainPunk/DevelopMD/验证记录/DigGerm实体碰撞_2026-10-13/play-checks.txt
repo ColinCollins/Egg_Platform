@@ -1,0 +1,33 @@
+通过：Initialize强制实体碰撞且初始冻结
+通过：圆形保留旧大小半径映射
+通过：暂停及重复暂停停止模拟
+通过：解除暂停恢复线速度及角速度
+通过：真实Dynamic病菌落地且被实体地面支撑
+通过：认领立即停止刚体并关闭实体Collider
+通过：已认领病菌解除暂停不恢复物理
+通过：暂停吸入不提前完成
+通过：恢复吸入后一次回调并隐藏
+通过：关卡初始暂停冻结 CircleCollider2D
+通过：实际Collision回调上报 CircleCollider2D
+通过：实体碰撞吞噬成长及冻结 CircleCollider2D
+通过：重复认领不重复结算 CircleCollider2D
+通过：吞噬后关卡暂停恢复不重启物理 CircleCollider2D
+通过：关卡初始暂停冻结 BoxCollider2D
+通过：实际Collision回调上报 BoxCollider2D
+通过：实体碰撞吞噬成长及冻结 BoxCollider2D
+通过：重复认领不重复结算 BoxCollider2D
+通过：Box形状参数保留
+通过：吞噬后关卡暂停恢复不重启物理 BoxCollider2D
+通过：关卡初始暂停冻结 PolygonCollider2D
+通过：实际Collision回调上报 PolygonCollider2D
+通过：实体碰撞吞噬成长及冻结 PolygonCollider2D
+通过：重复认领不重复结算 PolygonCollider2D
+通过：实际Body子Polygon由attachedRigidbody识别根病菌
+通过：吞噬后关卡暂停恢复不重启物理 PolygonCollider2D
+通过：较大病菌实体碰撞锁失败且不成长
+通过：失败锁后Resume仍冻结病菌
+通过：失败锁后Resume仍冻结病菌
+通过：失败锁后Resume仍冻结病菌
+通过：取消吸入停止物理
+通过：退出失活停止未认领病菌物理
+通过：取消不补发回调

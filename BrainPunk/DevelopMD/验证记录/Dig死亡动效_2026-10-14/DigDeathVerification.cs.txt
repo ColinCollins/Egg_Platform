@@ -1,0 +1,131 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using DG.Tweening;
+using Game.Dig;
+using UnityEngine;
+
+public sealed class DigDeathVerification : MonoBehaviour
+{
+    const string Output = "C:/Users/admin/AppData/Local/Temp/brainpunk-dig-failure-20261013/death-checks.txt";
+    readonly List<string> checks = new List<string>();
+    GameObject live;
+    DigLevelCtrl level;
+    Camera camera;
+    DigActorCtrl[] actors;
+    int results;
+    float resultAt;
+    static void Set(object obj, string name, object value) => obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(obj, value);
+    static T Get<T>(object obj, string name) => (T)obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(obj);
+    static void Call(object obj, string name, params object[] args) => obj.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(obj, args);
+    void Check(bool pass, string name) { if (!pass) throw new Exception(name); checks.Add(name); Debug.Log("DIG_DEATH_CHECK " + checks.Count + " " + name); }
+    Transform Node(string name, Transform parent) { var go = new GameObject(name); go.transform.SetParent(parent, false); return go.transform; }
+    void Fresh(int count = 1, int size = 10, float cameraY = 0, float cameraSize = 4.8f, float aspect = 16f / 9f)
+    {
+        if (live) { live.SetActive(false); Destroy(live); }
+        results = 0; resultAt = 0;
+        live = new GameObject("DeathLevel");
+        level = live.AddComponent<DigLevelCtrl>();
+        camera = Node("ExplicitCamera", live.transform).gameObject.AddComponent<Camera>();
+        camera.enabled = false; camera.orthographic = true; camera.orthographicSize = cameraSize; camera.aspect = aspect;
+        camera.transform.position = new Vector3(0, cameraY, -20);
+        actors = new DigActorCtrl[count];
+        for (int i = 0; i < count; i++)
+        {
+            var root = Node("Actor", live.transform); root.position = new Vector3(i * 3, cameraY + 1, 0);
+            var rb = root.gameObject.AddComponent<Rigidbody2D>(); rb.gravityScale = 0;
+            var circle = root.gameObject.AddComponent<CircleCollider2D>();
+            actors[i] = root.gameObject.AddComponent<DigActorCtrl>();
+            Set(actors[i], "body", Node("Body", root)); Set(actors[i], "physicsBody", rb); Set(actors[i], "circle", circle); Set(actors[i], "currentSize", size);
+        }
+        Set(level, "inputCamera", camera); Set(level, "actors", actors);
+        Set(level, "terrain", live.AddComponent<DigTerrainCtrl>());
+        Set(level, "germs", Array.Empty<DigGermCtrl>()); Set(level, "victoryCondition", DigVictoryCondition.ReachTarget);
+        level.ConfigureInk(10, Vector3.zero); level.InitializeRuntime(); level.SetPaused(false); level.SetInputEnabled(true);
+        level.Resolved += value => { if (value != DigLevelResult.Failed) throw new Exception("Unexpected result"); results++; resultAt = Time.time; };
+    }
+    Transform Body => Get<Transform>(actors[0], "body");
+    float Bottom => camera.ViewportToWorldPoint(new Vector3(.5f, 0, 20)).y;
+    bool Offscreen => actors[0].transform.position.y + actors[0].GetComponent<CircleCollider2D>().radius < Bottom;
+    IEnumerator Start()
+    {
+        Physics2D.simulationMode = SimulationMode2D.Script;
+        IEnumerator run = Verify();
+        while (true)
+        {
+            object wait;
+            try { if (!run.MoveNext()) break; wait = run.Current; }
+            catch (Exception ex) { File.WriteAllText(Output, string.Join("\n", checks) + "\nFAIL " + ex); Debug.LogException(ex); UnityEditor.EditorApplication.Exit(1); yield break; }
+            yield return wait;
+        }
+        File.WriteAllText(Output, string.Join("\n", checks) + "\nPASS " + checks.Count);
+        Debug.Log("DIG_DEATH_PASS " + checks.Count); UnityEditor.EditorApplication.Exit(0);
+    }
+    IEnumerator Verify()
+    {
+        Fresh(2);
+        float startY = actors[0].transform.position.y;
+        Vector3 originalScale = Body.localScale, otherPosition = actors[1].transform.position;
+        Check(level.TryFail(actors[0]) && level.IsResultLocked, "统一失败入口接受并锁结果");
+        Check(!actors[0].GetComponent<Rigidbody2D>().simulated && !actors[0].GetComponent<CircleCollider2D>().enabled, "死亡角色关闭物理和碰撞");
+        Check(!level.TryFail(actors[0]) && !level.TryCompleteByHint(), "死亡期间拒绝重复失败和竞争胜利");
+        yield return new WaitForSeconds(.09f);
+        Check(actors[0].transform.position.y > startY && Body.localScale == originalScale && results == 0, "死亡先上跳且保持尺寸，不提前结算");
+        var tween = Get<Tween>(actors[0], "_animation");
+        tween.Goto(.18f, true); float peak = actors[0].transform.position.y;
+        tween.Goto(.45f, true);
+        Check(actors[0].transform.position.y < peak && Body.localScale == originalScale, "越过最高点后下坠且不缩小");
+        yield return new WaitForSeconds(.45f);
+        Check(Offscreen && results == 1, "角色完全离开相机下边界后仅提交一次失败");
+        Check(actors[1].transform.position == otherPosition && !actors[1].GetComponent<Rigidbody2D>().simulated, "多角色只移动失败者，其它角色冻结");
+
+        foreach (var view in new[] { new Vector3(9, 8, 4f/3f), new Vector3(-6, 2.4f, 3088f/1440f), new Vector3(0, 4.8f, 9f/16f) })
+        {
+            Fresh(size: 200, cameraY: view.x, cameraSize: view.y, aspect: view.z);
+            camera.rect = new Rect(0, .12f, 1, .76f);
+            originalScale = Body.localScale;
+            level.TryFail();
+            yield return new WaitForSeconds(.83f);
+            Check(Offscreen && results == 1 && Body.localScale == originalScale, "大角色离屏且大小不变，相机Y/Size/Aspect=" + view);
+        }
+
+        Fresh(); actors[0].Grow(40); yield return new WaitForSeconds(.08f);
+        originalScale = Body.localScale; level.TryFail();
+        yield return new WaitForSeconds(.83f);
+        Check(Offscreen && results == 1 && Body.localScale == originalScale, "成长插值途中死亡保留当帧大小");
+
+        Fresh(); level.TryFail(); yield return new WaitForSeconds(.07f); level.SetPaused(true);
+        Vector3 pausedPosition = actors[0].transform.position;
+        yield return new WaitForSeconds(.22f);
+        Check(actors[0].transform.position == pausedPosition && results == 0, "上跳中暂停保持位置与结果");
+        level.SetPaused(false); yield return new WaitForSeconds(.83f);
+        Check(Offscreen && results == 1, "恢复上跳后完成下坠及结算");
+
+        Fresh(); level.TryFail(); yield return new WaitForSeconds(.32f); Call(level, "OnApplicationPause", true);
+        pausedPosition = actors[0].transform.position;
+        yield return new WaitForSeconds(.22f);
+        Check(actors[0].transform.position == pausedPosition && results == 0, "下坠中切后台保持位置与结果");
+        Call(level, "OnApplicationPause", false); yield return new WaitForSeconds(.55f);
+        Check(Offscreen && results == 1, "返回前台完成下坠及结算");
+
+        Fresh(); float failureAt = Time.time; level.TryFail(actors[0], 1f);
+        yield return new WaitForSeconds(.83f);
+        Check(Offscreen && results == 0, "007最短等待与动画并行，离屏不足1秒不提交");
+        yield return new WaitForSeconds(.25f);
+        Check(results == 1 && resultAt - failureAt >= .99f, "007命中至少1秒后唯一结算");
+
+        Fresh(); Set(actors[0], "deathHopHeight", 1.2f); Set(actors[0], "deathHopDuration", .1f); Set(actors[0], "deathFallDuration", .12f);
+        startY = actors[0].transform.position.y; level.TryFail(); Get<Tween>(actors[0], "_animation").Goto(.1f, true);
+        Check(Mathf.Abs(actors[0].transform.position.y - startY - 1.2f) < .001f, "Inspector跳跃高度和上跳时长生效");
+        yield return new WaitForSeconds(.2f);
+        Check(Offscreen && results == 1, "Inspector下坠时长生效");
+
+        Fresh(); level.TryFail(); yield return new WaitForSeconds(.1f); live.SetActive(false);
+        yield return new WaitForSeconds(.83f);
+        Check(results == 0 && Get<Tween>(actors[0], "_animation") == null, "退出失活取消动画及晚到结果");
+        Fresh(); yield return new WaitForSeconds(.1f);
+        Check(results == 0 && Body.localScale == Vector3.one * .7f && actors[0].GetComponent<CircleCollider2D>().enabled, "新关实例恢复大小与碰撞，不继承旧死亡状态");
+    }
+}

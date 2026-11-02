@@ -1,0 +1,262 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Game.Dig;
+using UnityEngine;
+
+public sealed class DigFailureVerification : MonoBehaviour
+{
+    const string Output = "C:/Users/admin/AppData/Local/Temp/brainpunk-dig-knock-20261013/";
+    readonly List<string> checks = new List<string>();
+    readonly List<DigLevelResult> results = new List<DigLevelResult>();
+    GameObject live;
+    DigLevelCtrl level;
+    DigActorCtrl[] actors;
+    DigTerrainCtrl terrain;
+    static void Set(object obj, string field, object value) => obj.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(obj, value);
+    static T Get<T>(object obj, string field) => (T)obj.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(obj);
+    static void Call(object obj, string method, params object[] args) { var info = obj.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic); var parameters = info.GetParameters(); var actual = new object[parameters.Length]; for (int i=0;i<actual.Length;i++) actual[i]=i<args.Length?args[i]:parameters[i].DefaultValue; info.Invoke(obj, actual); }
+    void Check(bool pass, string name) { if (!pass) throw new Exception(name); checks.Add(name); Debug.Log("FAILURE CHECK " + checks.Count + ": " + name); }
+    GameObject Node(string name, Transform parent) { var go = new GameObject(name); go.transform.SetParent(parent, false); return go; }
+    DigActorCtrl Actor(Transform parent, Vector2 position, int index)
+    {
+        var go = Node("Actor", parent); go.transform.position = position;
+        var rb = go.AddComponent<Rigidbody2D>(); rb.gravityScale = 0;
+        var circle = go.AddComponent<CircleCollider2D>();
+        var current = go.AddComponent<DigActorCtrl>();
+        Set(current, "body", Node("Body", go.transform).transform); Set(current, "physicsBody", rb); Set(current, "circle", circle); Set(current, "index", index);
+        return current;
+    }
+    DigGermCtrl Germ(int size)
+    {
+        var go = Node("Germ", live.transform); go.transform.position = new Vector2(20 + size, 0);
+        var circle = go.AddComponent<CircleCollider2D>(); circle.isTrigger = true;
+        var germ = go.AddComponent<DigGermCtrl>(); Set(germ, "body", Node("Body", go.transform).transform); Set(germ, "circle", circle); Set(germ, "currentSize", size); Set(germ, "growthSize", 5);
+        return germ;
+    }
+    void Fresh(int actorCount = 1, float capacity = 1f, bool initialize = true, bool consume = false)
+    {
+        if (live) { live.SetActive(false); Destroy(live); }
+        live = new GameObject("Live"); level = live.AddComponent<DigLevelCtrl>();
+        var camera = Node("Camera", live.transform).AddComponent<Camera>(); camera.orthographic = true; camera.enabled = false; camera.transform.position = new Vector3(0, 0, -10);
+        terrain = live.AddComponent<DigTerrainCtrl>();
+        actors = new DigActorCtrl[actorCount]; for (int i = 0; i < actorCount; i++) actors[i] = Actor(live.transform, new Vector2(-3 - i * 3, 0), i);
+        Set(level, "inputCamera", camera); Set(level, "terrain", terrain); Set(level, "actors", actors); Set(level, "victoryCondition", consume ? DigVictoryCondition.ConsumeAllGerms : DigVictoryCondition.ReachTarget); Set(level, "victoryDelay", .1f);
+        Set(level, "germs", consume ? new[] { Germ(5) } : Array.Empty<DigGermCtrl>());
+        level.ConfigureInk(capacity, Vector3.zero); results.Clear(); level.Resolved += result => results.Add(result);
+        if (initialize) { level.InitializeRuntime(); level.SetPaused(false); level.SetInputEnabled(true); }
+    }
+    T Condition<T>(Action<T> configure) where T : Component
+    {
+        var go = Node(typeof(T).Name, live.transform); go.SetActive(false); var component = go.AddComponent<T>(); Set(component, "level", level); configure?.Invoke(component); go.SetActive(true); return component;
+    }
+    DigTrapFailureHandle Trap(bool trigger = true)
+    {
+        return Condition<DigTrapFailureHandle>(component => { var box = component.gameObject.AddComponent<BoxCollider2D>(); box.isTrigger = trigger; box.size = Vector2.one; Set(component, "trapCollider", box); });
+    }
+    void Contact(DigActorCtrl current, Vector2 position)
+    {
+        current.GetComponent<Rigidbody2D>().position = position; Physics2D.SyncTransforms(); Physics2D.Simulate(.02f);
+    }
+    void Stroke(bool completed = true) { Call(level, "BeginStroke", Vector2.zero, -1); Call(level, "EndStroke", completed); }
+    IEnumerator Start()
+    {
+        Physics2D.simulationMode = SimulationMode2D.Script;
+        IEnumerator run = RunAll();
+        while (true)
+        {
+            object wait;
+            try { if (!run.MoveNext()) break; wait = run.Current; }
+            catch (Exception ex) { File.WriteAllText(Output + "checks.txt", string.Join("\n", checks) + "\nFAIL " + ex); Debug.LogException(ex); UnityEditor.EditorApplication.Exit(1); yield break; }
+            yield return wait;
+        }
+        File.WriteAllLines(Output + "checks.txt", checks); File.WriteAllText(Output + "verified.txt", "PASS " + checks.Count); Debug.Log("DIG FAILURE PASS " + checks.Count); UnityEditor.EditorApplication.Exit(0);
+    }
+    IEnumerator RunAll()
+    {
+        IEnumerator first = Verify(); while (first.MoveNext()) yield return first.Current;
+        IEnumerator second = KnockChecks(); while (second.MoveNext()) yield return second.Current;
+    }
+    IEnumerator Verify()
+    {
+        Fresh(initialize: false); Check(!level.TryFail(), "未初始化拒绝失败"); level.InitializeRuntime(); Check(!level.TryFail(), "加载暂停期间拒绝失败");
+        level.SetPaused(false); level.SetInputEnabled(true); level.SetPaused(true); Check(!level.TryFail(actors[0]), "菜单暂停拒绝陷阱失败"); level.SetPaused(false);
+        Call(level, "OnApplicationPause", true); Check(level.IsPaused && !level.TryFail(), "后台拒绝失败并暴露暂停"); Call(level, "OnApplicationPause", false);
+        var outsider = Actor(live.transform, new Vector2(30, 0), 0); Check(!level.TryFail(outsider), "外来Actor不能失败本关");
+        Check(level.TryFail() && level.IsResultLocked && !actors[0].GetComponent<Rigidbody2D>().simulated, "统一入口立即锁结果冻结物理");
+        Check(!level.TryFail() && !level.TryReachTarget(actors[0], 0) && !level.TryCompleteByHint(), "失败锁后重复和胜利均拒绝");
+        yield return new WaitForSeconds(.2f); Check(results.Count == 0, "死亡表现未完成不提前重开");
+        level.SetPaused(true); yield return new WaitForSeconds(.6f); Check(results.Count == 0, "失败表现菜单暂停不完成"); level.SetPaused(false);
+        yield return new WaitForSeconds(.6f); Check(results.Count == 1 && results[0] == DigLevelResult.Failed, "恢复后0.5秒死亡只提交一次失败");
+
+        Fresh(capacity: .075f); Check(level.TryDigSegment(Vector2.zero, Vector2.zero, true) && level.InkState.RemainingInk == 0f, "真实预算最后圆章归零");
+        yield return null; Check(!level.IsResultLocked && actors[0].GetComponent<Rigidbody2D>().simulated, "未挂耗尽脚本保留旧零墨物理行为");
+        var ink = Condition<DigInkExhaustionFailureCtrl>(null); yield return null;
+        Check(level.IsResultLocked, "归零后启用耗尽脚本会接受失败"); yield return new WaitForSeconds(.6f); Check(results.Count == 1 && results[0] == DigLevelResult.Failed, "耗尽复用标准死亡结果链");
+        Fresh(capacity: .075f); ink = Condition<DigInkExhaustionFailureCtrl>(null); yield return null; Check(!level.IsResultLocked, "有墨水不会误失败");
+        level.TryDigSegment(Vector2.zero, Vector2.zero, true); level.SetPaused(true); yield return null; Check(!level.IsResultLocked, "耗尽待判定遇暂停不失败");
+        level.AddRewardInk(); level.SetPaused(false); yield return null; Check(!level.IsResultLocked && level.InkState.RemainingInk > 0f, "暂停中已有广告补墨后恢复取消耗尽条件");
+        level.TryDigSegment(Vector2.zero, Vector2.zero, true); Call(level, "OnApplicationPause", true); yield return null; Check(!level.IsResultLocked, "后台不处理耗尽");
+        Call(level, "OnApplicationPause", false); yield return null; Check(level.IsResultLocked, "后台恢复仍耗尽则失败"); level.AddRewardInk(); Check(level.InkState.RemainingInk == 0f, "失败已锁后晚到补墨无效");
+        Fresh(capacity: .075f); ink = Condition<DigInkExhaustionFailureCtrl>(null); ink.enabled = false; level.TryDigSegment(Vector2.zero, Vector2.zero, true); yield return null; Check(!level.IsResultLocked, "耗尽脚本禁用不改变旧规则");
+
+        Fresh(); var timer = Condition<DigLevelCountdownCtrl>(t => Set(t, "cdTime", .15f));
+        yield return new WaitForSeconds(.2f); Check(!Get<bool>(timer, "_counting") && !level.IsResultLocked, "没有笔画不启动超时");
+        terrain.NewSand = false; Stroke(); Check(!Get<bool>(timer, "_started"), "只触碰已挖空洞不启动超时"); terrain.NewSand = true;
+        Stroke(false); Check(!Get<bool>(timer, "_started"), "取消有效笔画不启动超时");
+        Call(level, "BeginStroke", Vector2.zero, -1); level.SetPaused(true); Check(!Get<bool>(timer, "_started"), "暂停强制结束笔画不启动超时"); level.SetPaused(false);
+        Call(level, "BeginStroke", Vector2.zero, -1); level.SetInputEnabled(false); Check(!Get<bool>(timer, "_started"), "输入关闭不冒充正常落笔"); level.SetInputEnabled(true);
+        Call(level, "BeginStroke", Vector2.zero, -1); Check(!Get<bool>(timer, "_started"), "按住有效挖掘尚未松手不启动超时"); Call(level, "EndStroke", true);
+        Check(Get<bool>(timer, "_counting"), "正常有效挖掘松手启动倒计时"); float remaining = Get<float>(timer, "_remainingTime"); Stroke(); Check(Get<float>(timer, "_remainingTime") == remaining, "第二笔不重置倒计时");
+        level.SetPaused(true); yield return new WaitForSeconds(.2f); Check(Get<float>(timer, "_remainingTime") == remaining, "倒计时菜单暂停不扣秒"); level.SetPaused(false);
+        Call(level, "OnApplicationPause", true); yield return new WaitForSeconds(.2f); Check(Get<float>(timer, "_remainingTime") == remaining, "倒计时后台暂停不扣秒"); Call(level, "OnApplicationPause", false);
+        yield return new WaitForSeconds(.25f); Check(level.IsResultLocked && results.Count == 0, "超时先锁并播放死亡"); yield return new WaitForSeconds(.6f); Check(results.Count == 1 && results[0] == DigLevelResult.Failed, "超时仅提交一次失败");
+        Fresh(); timer = Condition<DigLevelCountdownCtrl>(t => Set(t, "cdTime", 0f)); Stroke(); Check(level.IsResultLocked, "零秒首笔完成即失败");
+        Fresh(); timer = Condition<DigLevelCountdownCtrl>(t => Set(t, "cdTime", .1f)); Stroke(); timer.enabled = false; yield return new WaitForSeconds(.2f); Check(!level.IsResultLocked, "禁用倒计时停止且退订"); Stroke(); Check(!Get<bool>(timer, "_started"), "已禁用计时器不收到新笔画");
+        Fresh(); timer = Condition<DigLevelCountdownCtrl>(t => Set(t, "cdTime", .1f)); Stroke(); Check(level.TryReachTarget(actors[0], 0), "超时前目标可先锁胜利"); yield return new WaitForSeconds(.7f); Check(results.Count == 1 && results[0] == DigLevelResult.Succeeded && !Get<bool>(timer, "_counting"), "超时不能覆盖胜利等待或追加失败");
+
+        Fresh(); var trap = Trap(); Contact(actors[0], Vector2.zero); Check(level.IsResultLocked, "真实Trigger Enter接受陷阱失败"); Physics2D.Simulate(.02f); yield return new WaitForSeconds(.6f); Check(results.Count == 1 && results[0] == DigLevelResult.Failed, "重复物理接触不会重复结算");
+        Fresh(); trap = Trap(false); Contact(actors[0], Vector2.zero); Check(level.IsResultLocked, "真实普通Collision Enter接受陷阱失败");
+        Fresh(); trap = Trap(); trap.enabled = false; Contact(actors[0], Vector2.zero); Check(!level.IsResultLocked, "禁用陷阱脚本即使Unity派接触也拒绝"); trap.enabled = true; Physics2D.Simulate(.02f); Check(level.IsResultLocked, "真实Trigger Stay在启用后接受接触");
+        Fresh(); trap = Trap(); var original = actors[0].GetComponent<CircleCollider2D>(); original.enabled = false; Node("ChildCollider", actors[0].transform).AddComponent<BoxCollider2D>(); Contact(actors[0], Vector2.zero); Check(level.IsResultLocked, "角色子Collider通过attachedRigidbody识别");
+        Fresh(); trap = Trap(); outsider = Actor(live.transform, new Vector2(20, 0), 0); outsider.GetComponent<Rigidbody2D>().simulated = true; Contact(outsider, Vector2.zero); Check(!level.IsResultLocked, "真实外来同Index角色不能触发本关陷阱");
+        var nonActor = Node("ForeignBody", live.transform); nonActor.AddComponent<Rigidbody2D>().gravityScale = 0; nonActor.AddComponent<BoxCollider2D>(); Physics2D.SyncTransforms(); Physics2D.Simulate(.02f); Check(!level.IsResultLocked, "普通刚体接触陷阱不失败");
+        Fresh(); trap = Trap(); var wrong = Node("WrongCollider", live.transform).AddComponent<BoxCollider2D>(); Set(trap, "trapCollider", wrong); Contact(actors[0], Vector2.zero); Check(!level.IsResultLocked, "陷阱Collider跨节点绑定拒绝");
+        Fresh(); trap = Trap(); trap.GetComponent<BoxCollider2D>().enabled = false; Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!level.IsResultLocked, "陷阱Collider禁用拒绝报告");
+        Fresh(); trap = Trap(); level.SetPaused(true); Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!level.IsResultLocked, "暂停陷阱接触不占结果"); level.SetPaused(false); Contact(actors[0], Vector2.zero); Check(level.IsResultLocked, "恢复后真实接触接受失败");
+        Fresh(actorCount: 2); trap = Trap(); Check(level.TryReachTarget(actors[0], 0) && !level.IsResultLocked, "多角色部分到达保持玩法");
+        Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!level.IsResultLocked, "已到达角色不能再踩陷阱失败"); Contact(actors[1], Vector2.zero);
+        Check(level.IsResultLocked && Get<bool>(actors[1], "_dead") && !Get<bool>(actors[0], "_dead") && !actors[0].GetComponent<Rigidbody2D>().simulated, "任一未到达角色踩陷阱全关冻并播放实际失败者死亡");
+        Fresh(actorCount: 2); level.TryReachTarget(actors[0], 0); Check(level.TryFail() && Get<bool>(actors[1], "_dead"), "全关失败条件选择首个未到达角色");
+        Fresh(); trap = Trap(); level.TryReachTarget(actors[0], 0); Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!Get<bool>(actors[0], "_dead"), "胜利锁后陷阱不能杀角色");
+        Fresh(); level.TryFail(); live.SetActive(false); yield return new WaitForSeconds(.6f); Check(results.Count == 0, "退出失活取消死亡晚到结果");
+        Fresh(); timer = Condition<DigLevelCountdownCtrl>(t => Set(t, "cdTime", .1f)); Stroke(); live.SetActive(false); yield return new WaitForSeconds(.2f); Check(!level.IsResultLocked, "旧关失活取消超时");
+        Fresh(); timer = Condition<DigLevelCountdownCtrl>(t => Set(t, "cdTime", .1f)); yield return new WaitForSeconds(.2f); Check(!level.IsResultLocked, "重建新实例不继承旧倒计时");
+
+        Fresh(consume: true); var small = Get<DigGermCtrl[]>(level, "germs")[0]; var big = Germ(11); big.Initialize(); Set(level, "germs", new[] { small, big });
+        level.QueueContact(actors[0], small); level.QueueContact(actors[0], big); Call(level, "FixedUpdate"); Check(level.IsResultLocked && actors[0].CurrentSize == 10 && !small.IsClaimed, "旧吞噬模式坏批次优先失败不先成长");
+        yield return new WaitForSeconds(.6f); Check(results.Count == 1 && results[0] == DigLevelResult.Failed, "旧病菌失败仍原死亡结算");
+        Fresh(consume: true); small = Get<DigGermCtrl[]>(level, "germs")[0]; level.QueueContact(actors[0], small); Call(level, "FixedUpdate"); Check(actors[0].CurrentSize == 15 && results.Count == 0, "旧吞噬模式有效成长并等待吸入");
+        yield return new WaitForSeconds(.65f); Check(results.Count == 1 && results[0] == DigLevelResult.Succeeded, "未挂失败条件的旧吞噬胜利保持");
+    }
+
+    ParticleSystem Knock(DigTrapFailureHandle trap)
+    {
+        var effectNode = Node("BoundKnock", trap.transform); effectNode.SetActive(false); effectNode.transform.position = new Vector3(15, 17, 3);
+        var effect = effectNode.AddComponent<ParticleSystem>(); var main = effect.main; main.playOnAwake = false; main.loop = false; main.duration = 2f; main.startLifetime = 1f; main.startSpeed = 0f;
+        var shape = effect.shape; shape.enabled = false; var emission = effect.emission; emission.rateOverTime = 30f;
+        var child = Node("ChildKnock", effectNode.transform).AddComponent<ParticleSystem>(); var childMain = child.main; childMain.playOnAwake = false; childMain.loop = false; childMain.duration = 2f; childMain.startLifetime = 1f; childMain.startSpeed = 0f;
+        effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); Set(trap, "knockEffect", effect); effectNode.SetActive(true); return effect;
+    }
+
+    IEnumerator KnockChecks()
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/ProbeAssets/DigGame_SharpTrap.prefab");
+        var before = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/ProbeAssets/BeforeTrap.prefab");
+        Check(prefab && before, "原生PrefabImporter导入修改前后SharpTrap");
+        var template = prefab.GetComponent<DigTrapFailureHandle>(); var serialized = new UnityEditor.SerializedObject(template);
+        var assetEffect = serialized.FindProperty("knockEffect").objectReferenceValue as ParticleSystem;
+        Check(assetEffect && assetEffect.transform.IsChildOf(prefab.transform), "Inspector实际绑定陷阱子ParticleSystem");
+        Check(UnityEditor.PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(assetEffect.gameObject) == "Assets/ProbeAssets/Knock_Explosion.prefab", "粒子是既有Knock_Explosion的nested实例");
+        Check(!assetEffect.main.playOnAwake && !assetEffect.main.loop, "生产绑定粒子不会进关自播或循环");
+        var collider = prefab.GetComponent<PolygonCollider2D>(); var oldCollider = before.GetComponent<PolygonCollider2D>();
+        bool pathsEqual = collider.pathCount == oldCollider.pathCount;
+        for (int i = 0; i < collider.pathCount; i++)
+        {
+            var first = collider.GetPath(i); var second = oldCollider.GetPath(i); pathsEqual &= first.Length == second.Length;
+            for (int j = 0; j < first.Length && j < second.Length; j++) pathsEqual &= first[j] == second[j];
+        }
+        Check(pathsEqual && collider.isTrigger == oldCollider.isTrigger && collider.offset == oldCollider.offset, "生产陷阱Collider路径与Trigger配置保持");
+        Check(prefab.transform.localPosition == before.transform.localPosition && prefab.transform.localRotation == before.transform.localRotation, "源陷阱位置旋转保持；缩放使用当前工作区配置");
+        Check(serialized.FindProperty("level").objectReferenceValue == null && serialized.FindProperty("trapCollider").objectReferenceValue == collider, "原Level资源边界与Collider绑定保持");
+        var placed = Instantiate(prefab); var placedEffect = Get<ParticleSystem>(placed.GetComponent<DigTrapFailureHandle>(), "knockEffect"); yield return null;
+        Check(!placedEffect.isPlaying, "实际SharpTrap实例初始化不自动播放"); Destroy(placed);
+
+        Fresh(); var trap = Trap(); var effect = Knock(trap); Vector2 expected = trap.GetComponent<BoxCollider2D>().ClosestPoint(Vector2.zero);
+        Contact(actors[0], Vector2.zero); Check(level.IsResultLocked && effect.isPlaying, "真实Trigger失败被接受后播放knock");
+        Check((Vector2)effect.transform.position == expected && effect.transform.position.z == 3f, "Trigger取锁定前ClosestPoint且保留Z");
+        var childEffect = effect.transform.GetChild(0).GetComponent<ParticleSystem>(); Check(childEffect.isPlaying, "Play(true)启动子粒子");
+        yield return new WaitForSeconds(.1f); float time = effect.time; Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>());
+        Check(Mathf.Abs(effect.time - time) < .001f, "重复接触不清空或重播动效");
+        yield return new WaitForSeconds(.5f); Check(results.Count == 1 && results[0] == DigLevelResult.Failed, "粒子不延长或重复原0.5秒失败结果");
+
+        Fresh(); trap = Trap(false); effect = Knock(trap); var capture = trap.gameObject.AddComponent<KnockCollisionCapture>();
+        Contact(actors[0], Vector2.zero); Check(capture.HasContact && effect.isPlaying, "真实Collision接受失败并播放");
+        Check(Vector2.Distance(effect.transform.position, capture.Point) < .0001f && effect.transform.position.z == 3f, "Collision使用真实GetContact点并保留Z");
+        Fresh(); trap = Trap(); effect = Knock(trap); actors[0].GetComponent<CircleCollider2D>().enabled = false; Node("ChildCollider", actors[0].transform).AddComponent<BoxCollider2D>(); Contact(actors[0], Vector2.zero);
+        Check(level.IsResultLocked && effect.isPlaying, "子Collider命中也播放一次knock");
+        Fresh(); trap = Trap(); effect = Knock(trap); level.SetPaused(true); Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!effect.isPlaying && !level.IsResultLocked, "暂停拒绝失败也拒绝动效");
+        level.SetPaused(false); Call(level, "OnApplicationPause", true); Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!effect.isPlaying && !level.IsResultLocked, "后台拒绝动效"); Call(level, "OnApplicationPause", false);
+        var outsider = Actor(live.transform, new Vector2(20, 0), 0); Call(trap, "ReportContact", outsider.GetComponent<CircleCollider2D>()); Check(!effect.isPlaying && !level.IsResultLocked, "外来同Index角色不播放");
+        var ordinaryBody = Node("OrdinaryBody", live.transform); ordinaryBody.AddComponent<Rigidbody2D>(); var ordinaryCollider = ordinaryBody.AddComponent<CircleCollider2D>(); Call(trap, "ReportContact", ordinaryCollider); Check(!effect.isPlaying, "非Actor不播放");
+        Fresh(actorCount: 2); trap = Trap(); effect = Knock(trap); level.TryReachTarget(actors[0], 0); Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!effect.isPlaying && !level.IsResultLocked, "已到达角色不播放");
+        Contact(actors[1], Vector2.zero); Check(effect.isPlaying && Get<bool>(actors[1], "_dead"), "多角色实际失败者触发动效");
+        Fresh(); trap = Trap(); effect = Knock(trap); level.TryReachTarget(actors[0], 0); Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!effect.isPlaying, "胜利锁定后陷阱不播放");
+        Fresh(); trap = Trap(); effect = Knock(trap); trap.GetComponent<BoxCollider2D>().enabled = false; Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!effect.isPlaying, "禁用Collider不播放");
+        trap.GetComponent<BoxCollider2D>().enabled = true; trap.enabled = false; Call(trap, "ReportContact", actors[0].GetComponent<CircleCollider2D>()); Check(!effect.isPlaying, "禁用脚本不播放");
+        Fresh(); trap = Trap(); effect = Knock(trap); Contact(actors[0], Vector2.zero); effect.Simulate(.2f, true, false); childEffect = effect.transform.GetChild(0).GetComponent<ParticleSystem>();
+        Check(effect.particleCount > 0 && childEffect.particleCount > 0, "实际父子系统已产生粒子"); trap.enabled = false;
+        Check(!effect.isPlaying && effect.particleCount == 0 && childEffect.particleCount == 0, "脚本禁用停止并清掉父子粒子");
+        Fresh(); trap = Trap(); effect = Knock(trap); Contact(actors[0], Vector2.zero); effect.Simulate(.1f, true, false); live.SetActive(false);
+        Check(effect.particleCount == 0, "关卡退出不残留击中粒子");
+        Fresh(); trap = Trap(); effect = Knock(trap); Check(!effect.isPlaying && effect.particleCount == 0, "新实例重建不继承旧播放状态");
+        Fresh(); trap = Trap(); Contact(actors[0], Vector2.zero); Check(level.IsResultLocked, "未绑定动效仍保持原失败行为");
+    }
+
+    IEnumerator HudChecks()
+    {
+        Fresh();
+        var hudObject = new GameObject("HUD", typeof(RectTransform));
+        var hud = hudObject.AddComponent<DigGame_GamePlayPanel>();
+        foreach (string field in new[] { "PauseBtn", "PencilShopBtn", "ResetBtn", "ShopBtn", "TipsBtn", "UIYouxizhong2X201Btn" }) Set(hud, field, Node(field, hudObject.transform).AddComponent<CustomButton>());
+        foreach (string field in new[] { "LevelTxt", "UiYouxizhong202Txt" })
+        {
+            var textNode = new GameObject(field, typeof(RectTransform)); textNode.transform.SetParent(hudObject.transform, false); Set(hud, field, textNode.AddComponent<TMPro.TextMeshProUGUI>());
+        }
+        var cdNode = new GameObject("cd_txt", typeof(RectTransform)); cdNode.transform.SetParent(hudObject.transform, false);
+        var text = cdNode.AddComponent<TMPro.TextMeshProUGUI>(); cdNode.transform.localScale = new Vector3(.8f, .7f, 1f); var baseline = cdNode.transform.localScale;
+        Set(hud, "countdownText", text); Set(hud, "inkProcessHandle", Node("Ink", hudObject.transform).AddComponent<DrawGame_InkProcessHandle>());
+        var reward = new GameObject("Reward", typeof(RectTransform)); reward.transform.SetParent(hudObject.transform, false); Set(hud, "rewardAdButtonRoot", reward.GetComponent<RectTransform>());
+        var mask = new GameObject("Mask", typeof(RectTransform)); mask.transform.SetParent(hudObject.transform, false); Set(hud, "blackMask", mask.AddComponent<UnityEngine.UI.Image>());
+        Set(hud, "clickBlock", Node("ClickBlock", hudObject.transform)); Set(hud, "inkRoot", Node("InkRoot", hudObject.transform));
+        hud.OnCreate(); hud.OnOpen(); Check(!cdNode.activeSelf, "HUD打开初始隐藏cd_txt");
+        int notifications = 0;
+        Action<int> forward = seconds => { notifications++; hud.SetCountdownSeconds(seconds); };
+        level.CountdownChanged += forward;
+        var timer = Condition<DigLevelCountdownCtrl>(component => Set(component, "cdTime", 5.2f)); Stroke();
+        Check(level.CountdownSeconds == 0 && notifications == 0 && !cdNode.activeSelf, "超过5秒不显示也不通知HUD");
+        Set(timer, "_remainingTime", 4.9f); Call(timer, "Update");
+        Check(level.CountdownSeconds == 5 && cdNode.activeSelf && text.text == "5", "进入最后五秒实际TMP显示5");
+        int oldNotifications = notifications; Call(timer, "Update"); Check(notifications == oldNotifications, "同一整数秒关卡通知去重");
+        yield return new WaitForSeconds(.1f); var during = cdNode.transform.localScale; Check(during.x > baseline.x, "数字真实DOTween放大");
+        hud.SetCountdownSeconds(5); Check(Vector3.Distance(cdNode.transform.localScale, during) < .001f, "相同数字不重启脉冲");
+        yield return new WaitForSeconds(.35f); Check(Vector3.Distance(cdNode.transform.localScale, baseline) < .001f, "脉冲恢复非单位原始缩放");
+        level.SetPaused(true); var remaining = Get<float>(timer, "_remainingTime"); yield return new WaitForSeconds(.12f);
+        Check(Get<float>(timer, "_remainingTime") == remaining && text.text == "5" && cdNode.activeSelf, "暂停保留数字不继续扣时"); level.SetPaused(false);
+        Call(level, "OnApplicationPause", true); yield return new WaitForSeconds(.12f); Check(Get<float>(timer, "_remainingTime") == remaining, "后台保持HUD与计时快照"); Call(level, "OnApplicationPause", false);
+        foreach (int seconds in new[] { 4, 3, 2, 1 })
+        {
+            Set(timer, "_remainingTime", seconds - .01f); Call(timer, "Update"); Check(level.CountdownSeconds == seconds && text.text == seconds.ToString(), "HUD整数切换" + seconds);
+        }
+        Set(timer, "_remainingTime", 0f); Call(timer, "Update"); Check(level.IsResultLocked && level.CountdownSeconds == 0 && !cdNode.activeSelf, "归零失败前隐藏不显示0");
+        Check(Vector3.Distance(cdNode.transform.localScale, baseline) < .001f, "归零杀Tween并恢复原尺度");
+        hud.SetCountdownSeconds(4); Check(cdNode.activeSelf, "面板可以显示新的快照"); hud.OnClose(); Check(!cdNode.activeSelf && Vector3.Distance(cdNode.transform.localScale, baseline) < .001f, "关闭清数字和Tween");
+        hud.SetCountdownSeconds(3); Check(!cdNode.activeSelf, "关闭后的通知不重新显示"); hud.OnOpen(); Check(!cdNode.activeSelf, "重新打开无旧倒计时残留");
+        hud.BindRuntime(level.InkState, false, false, true); Check(!cdNode.activeSelf, "新runtime绑定先清倒计时");
+        var oldLevel = level; oldLevel.CountdownChanged -= forward;
+        Fresh(); level.CountdownChanged += forward; timer = Condition<DigLevelCountdownCtrl>(component => Set(component, "cdTime", 4.9f)); Stroke();
+        Check(cdNode.activeSelf && text.text == "5", "新关计时可再次显示"); oldLevel.SetCountdownSeconds(1); Check(text.text == "5", "旧源退订后不能污染新HUD");
+        Check(level.TryReachTarget(actors[0], 0) && level.CountdownSeconds == 0 && !cdNode.activeSelf, "胜利条件锁定立即隐藏无需等胜利UI");
+        Fresh(); level.CountdownChanged += forward; timer = Condition<DigLevelCountdownCtrl>(component => Set(component, "cdTime", 4.9f)); Stroke(); level.TryFail();
+        Check(level.CountdownSeconds == 0 && !cdNode.activeSelf, "陷阱或墨水失败占用时立即隐藏");
+        Fresh(); level.CountdownChanged += forward; timer = Condition<DigLevelCountdownCtrl>(component => Set(component, "cdTime", 4.9f)); Stroke(); timer.enabled = false;
+        Check(level.CountdownSeconds == 0 && !cdNode.activeSelf, "倒计时组件禁用即隐藏");
+        Fresh(); level.CountdownChanged += forward; timer = Condition<DigLevelCountdownCtrl>(component => Set(component, "cdTime", 4.9f)); Stroke(); live.SetActive(false);
+        Check(level.CountdownSeconds == 0 && !cdNode.activeSelf, "关卡失活清快照和HUD");
+        hud.SetCountdownSeconds(5); Time.timeScale = 0f; yield return new WaitForSecondsRealtime(.4f); Check(Vector3.Distance(cdNode.transform.localScale, baseline) < .001f, "timeScale0脉冲按Draw原规则归位"); Time.timeScale = 1f;
+        hud.SetCountdownSeconds(4); hud.OnClose(); UnityEngine.Object.Destroy(hudObject); yield return null;
+        Check(!hud, "直接销毁面板完成Tween清理");
+    }
+}

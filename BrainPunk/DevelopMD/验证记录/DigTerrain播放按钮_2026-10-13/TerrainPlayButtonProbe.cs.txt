@@ -1,0 +1,54 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Game.Dig;
+using Game.Scripts.Effects;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+public sealed class TerrainPlayButtonProbe:MonoBehaviour
+{
+    public GameObject LevelPrefab; public GameObject LevelInstance;
+    const string Output="C:/Users/admin/AppData/Local/Temp/brainpunk-terrain-play-buttons-20261013/";
+    static readonly List<string> checks=new List<string>();
+    static T Get<T>(DigTerrainCtrl o,string name)=>(T)typeof(DigTerrainCtrl).GetField(name,BindingFlags.NonPublic|BindingFlags.Instance).GetValue(o);
+    static void Set(DigTerrainCtrl o,string name,object value)=>typeof(DigTerrainCtrl).GetField(name,BindingFlags.NonPublic|BindingFlags.Instance).SetValue(o,value);
+    static void Collect(DigTerrainCtrl o)=>typeof(DigTerrainCtrl).GetMethod("CollectHoleSources",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(o,null);
+    static void Check(bool ok,string text){if(!ok)throw new Exception(text);checks.Add("通过："+text);}
+    static void Fail(Exception e){File.WriteAllText(Output+"failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}
+    public static void Run()
+    {
+        try
+        {
+            foreach(var name in new[]{"CollectHoleSources","InitMap"})
+            {
+                var method=typeof(DigTerrainCtrl).GetMethod(name,BindingFlags.NonPublic|BindingFlags.Public|BindingFlags.Instance);bool disabled=false;foreach(var attr in method.GetCustomAttributes(false))if(attr.GetType().Name=="DisableInPlayModeAttribute")disabled=true;
+                Check(!disabled,name+"没有DisableInPlayMode限制");
+            }
+            var stage=PrefabStageUtility.OpenPrefab("Assets/Game/Prefabs/DigLevel/DigLevel_004.prefab");var t=stage.prefabContentsRoot.GetComponent<DigTerrainCtrl>();t.InitMap();Check(Get<bool>(t,"mapBaked"),"非播放PrefabStage仍可InitMap");File.WriteAllLines(Output+"edit-checks.txt",checks);
+            StageUtility.GoToMainStage();var probe=new GameObject("仅TEMP Terrain播放按钮验证").AddComponent<TerrainPlayButtonProbe>();probe.LevelPrefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Prefabs/DigLevel/DigLevel_004.prefab");probe.LevelInstance=(GameObject)PrefabUtility.InstantiatePrefab(probe.LevelPrefab);PrefabUtility.UnpackPrefabInstance(probe.LevelInstance,PrefabUnpackMode.Completely,InteractionMode.AutomatedAction);EditorApplication.isPlaying=true;
+        }
+        catch(Exception e){Fail(e);}
+    }
+    IEnumerator Start()
+    {
+        yield return null;
+        try
+        {
+            var linked=Instantiate(LevelPrefab);linked.GetComponent<DigTerrainCtrl>().InitMap();Check(true,"播放中有Prefab连接的实例可InitMap");DestroyImmediate(linked);var root=LevelInstance;var t=root.GetComponent<DigTerrainCtrl>();var v=Get<SceneSpriteBrushClear>(t,"visual");var sr=Get<SpriteRenderer>(t,"sandSprite");var map=Get<Tilemap>(t,"collisionMap");var grid=Get<Grid>(t,"collisionGrid");t.BindRuntime();
+            var marker=new GameObject("仅TEMP隐藏来源");marker.transform.SetParent(root.transform);marker.transform.position=new Vector3(100,100,0);var hole=marker.AddComponent<BaseDigComp>();marker.SetActive(false);
+            var nested=new GameObject("仅TEMP嵌套地形");nested.transform.SetParent(root.transform);nested.AddComponent<DigTerrainCtrl>();var outside=nested.AddComponent<BaseDigComp>();Collect(t);
+            var sources=Get<BaseDigComp[]>(t,"spawnHoles");Check(Array.IndexOf(sources,hole)>=0,"Play Mode收集包含inactive来源");Check(Array.Exists(sources,x=>x is DigActorCtrl),"Play Mode收集Actor派生类型");Check(Array.IndexOf(sources,outside)<0&&Get<BaseDigComp[]>(t,"reservedHoles").Length==0,"Play Mode排除嵌套地形并清Reserved");DestroyImmediate(nested);
+            File.WriteAllText(Output+"runtime-paths.txt","PrefabPath="+PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(root)+"\nStageOwnsRoot="+(PrefabStageUtility.GetCurrentPrefabStage()!=null&&PrefabStageUtility.GetCurrentPrefabStage().IsPartOfPrefabContents(root)));
+            Set(t,"collisionSubdivisions",2);t.InitMap();Check(Get<bool>(t,"mapBaked")&&Get<int>(t,"bakedSubdivisions")==2,"运行克隆InitMap按已绑定遮罩资产烘焙");Check(Get<BoundsInt>(t,"_runtimeCells").Equals(Get<BoundsInt>(t,"bakedCells")),"新碰撞范围同步运行缓存");
+            var material=sr.sharedMaterial;Check(material.GetTexture("_MaskTex")==v.MaskTexture,"播放Renderer保留RT材质");
+            Vector2 point=Vector2.zero;bool dug=false;var bounds=sr.localBounds;for(int y=2;y<9&&!dug;y++)for(int x=2;x<9&&!dug;x++){point=sr.transform.TransformPoint(new Vector3(bounds.min.x+bounds.size.x*x/10f,bounds.min.y+bounds.size.y*y/10f,0));dug=t.Stamp(point);}
+            Check(dug&&!t.Stamp(point),"重烘焙后可挖新沙且旧空洞免费");var scale=grid.transform.localScale;t.InitMap();Check(grid.transform.localScale==scale,"重复烘焙Grid不累乘缩放");Check(t.Stamp(point)&&!t.Stamp(point),"再次InitMap恢复CPU余沙位图且可重复挖掘");Check(sr.sharedMaterial==material&&sr.sharedMaterial.GetTexture("_MaskTex")==v.MaskTexture,"后续挖掘继续使用RT材质");
+            root.SetActive(false);Destroy(root);File.WriteAllLines(Output+"play-checks.txt",checks);Debug.Log("Terrain播放按钮检查通过 "+checks.Count+" 项");EditorApplication.Exit(0);
+        }
+        catch(Exception e){Fail(e);}
+    }
+}

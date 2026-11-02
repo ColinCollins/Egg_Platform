@@ -1,0 +1,10 @@
+using UnityEngine;
+public sealed class KnockCollisionCapture : MonoBehaviour
+{
+    public bool HasContact;
+    public Vector2 Point;
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.contactCount > 0) { Point = collision.GetContact(0).point; HasContact = true; }
+    }
+}

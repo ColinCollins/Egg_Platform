@@ -1,0 +1,40 @@
+using UnityEngine; using Bear.UI; public partial class GMPanel {
+    private void UnlockAllLevel(CustomButton btn)
+    {
+        LevelCtrl mainLevelCtrl = PlayCtrl.Instance?.Level;
+        DrawGameLevelCtrl drawLevelCtrl = GameManager.Instance?.DrawGameLevel;
+        IWannerGameLevelCtrl iwannerLevelCtrl = GameManager.Instance?.IWannerGameLevel;
+        DigGameLevelCtrl digLevelCtrl = GameManager.Instance?.DigGameLevel;
+
+        int mainAddedCount = 0;
+        bool mainSucceeded =
+            mainLevelCtrl != null &&
+            mainLevelCtrl.TryUnlockAllLevels(out mainAddedCount);
+        int drawAddedCount = 0;
+        bool drawSucceeded =
+            drawLevelCtrl != null &&
+            drawLevelCtrl.TryUnlockAllLevels(out drawAddedCount);
+        int iwannerAddedCount = 0;
+        bool iwannerSucceeded =
+            iwannerLevelCtrl != null &&
+            iwannerLevelCtrl.TryUnlockAllGroups(out iwannerAddedCount);
+        int digAddedCount = 0;
+        bool digSucceeded =
+            digLevelCtrl != null &&
+            digLevelCtrl.TryUnlockAllLevels(out digAddedCount);
+        if (digSucceeded)
+            UIManager.Instance?.GetUI<DigGame_ChoiceLevelPanel>()?.RefreshRemoteConfig();
+
+        if (!mainSucceeded || !drawSucceeded || !iwannerSucceeded || !digSucceeded)
+        {
+            Debug.LogWarning(
+                $"[GMPanel] Unlock all levels incomplete. main:{mainSucceeded}, draw:{drawSucceeded}, iwanner:{iwannerSucceeded}, dig:{digSucceeded}");
+            return;
+        }
+
+        Debug.Log(
+            $"[GMPanel] Unlock all levels complete. mainAdded:{mainAddedCount}, drawAdded:{drawAddedCount}, iwannerAdded:{iwannerAddedCount}, digAdded:{digAddedCount}");
+    }
+
+
+}

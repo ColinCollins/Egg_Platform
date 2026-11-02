@@ -1,0 +1,34 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Game.Dig;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+public sealed class WoodSlideProbe:MonoBehaviour
+{
+    public GameObject Prefab;
+    public static void Run(){new GameObject("仅TEMP木头滑动诊断").AddComponent<WoodSlideProbe>().Prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Prefabs/DigLevel/DigLevel_004.prefab");EditorApplication.isPlaying=true;}
+    static T Field<T>(object source,string name)=>(T)source.GetType().GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(source);
+    readonly List<string> report=new List<string>();
+    GameObject live;
+    BoxCollider2D wood;
+    Rigidbody2D body;
+    void Fresh(){if(live)DestroyImmediate(live);live=Instantiate(Prefab);wood=live.GetComponentsInChildren<BoxCollider2D>(true).Single(c=>Mathf.Abs(c.size.x-4.81f)<.001f&&Mathf.Abs(c.size.y-.59f)<.001f);body=wood.attachedRigidbody;foreach(var b in live.GetComponentsInChildren<Rigidbody2D>(true))if(b!=body&&b.bodyType==RigidbodyType2D.Dynamic)b.simulated=false;}
+    void Tick(){Physics2D.SyncTransforms();body.WakeUp();for(int i=0;i<150;i++)Physics2D.Simulate(.02f);}
+    string Contacts(){var c=new ContactPoint2D[32];int n=body.GetContacts(c);return string.Join(";",c.Take(n).Select(x=>x.collider.name+"/"+x.otherCollider.name+" p="+x.point.ToString("F3")+" normal="+x.normal.ToString("F3")));}
+    void Plane(int mode)
+    {
+        Fresh();var ground=new GameObject("仅TEMP平滑20度坡");ground.transform.position=new Vector3(100,100,0);ground.transform.rotation=Quaternion.Euler(0,0,20);var rb=ground.AddComponent<Rigidbody2D>();rb.bodyType=RigidbodyType2D.Static;var box=ground.AddComponent<BoxCollider2D>();box.size=new Vector2(40,.5f);box.sharedMaterial=AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(mode==0?"Assets/Game/ArtSrc/Physics/Ice.physicsMaterial2D":"Assets/Game/ArtSrc/Physics/DrawStrokeFree.physicsMaterial2D");if(mode==0||mode==2)wood.sharedMaterial=box.sharedMaterial;if(mode==3)wood.sharedMaterial=new PhysicsMaterial2D("仅TEMP低摩擦Minimum"){friction=.05f,bounciness=0,frictionCombine=PhysicsMaterialCombine2D.Minimum};report.Add("木头摩擦="+wood.sharedMaterial.friction+" 合并="+wood.sharedMaterial.frictionCombine+" 地面摩擦="+box.sharedMaterial.friction+" 合并="+box.sharedMaterial.frictionCombine);body.rotation=20;body.position=new Vector2(100,100)+(Vector2)ground.transform.up*(.25f+.295f+.004f);body.linearVelocity=Vector2.zero;body.angularVelocity=0;var start=body.position;Tick();if(mode==1&&(body.position-start).x>-2f)throw new Exception("修正Prefab在平滑坡仍未滑动");report.Add("平滑坡 "+mode.ToString()+" 位移="+(body.position-start).ToString("F4")+" 速度="+body.linearVelocity.ToString("F4")+" 接触="+Contacts());DestroyImmediate(ground);
+    }
+    void Channel(string kind)
+    {
+        Fresh();var terrain=Field<DigTerrainCtrl>(live.GetComponent<DigLevelCtrl>(),"terrain");terrain.BindRuntime();if(kind=="木头圆角")wood.edgeRadius=.05f;
+        var from=new Vector2(-5.2f,-1.7f);var to=kind=="延长坡道"?new Vector2(5.2f,2.0f):new Vector2(2.3f,.95f);int count=Mathf.CeilToInt(Vector2.Distance(from,to)/terrain.StrokeStep);for(int i=0;i<=count;i++)terrain.Stamp(Vector2.Lerp(from,to,i/(float)count));terrain.FlushCollider();
+        var map=Field<Tilemap>(terrain,"collisionMap");var composite=map.GetComponent<CompositeCollider2D>();if(kind=="简化边缘"){composite.vertexDistance=.05f/Mathf.Min(Mathf.Abs(map.transform.lossyScale.x),Mathf.Abs(map.transform.lossyScale.y));composite.GenerateGeometry();}
+        if(kind.StartsWith("斜通道")){Vector2 dir=(to-from).normalized;Vector2 normal=new Vector2(-dir.y,dir.x);body.rotation=Mathf.Atan2(dir.y,dir.x)*Mathf.Rad2Deg;body.position=from+dir*(-from.x/dir.x)-normal*.27f;body.linearVelocity=Vector2.zero;body.angularVelocity=0;}var start=body.position;Tick();if(kind.StartsWith("斜通道")&&(body.position-start).x>-.2f)throw new Exception("修正两个Collider后真实沙土斜通道仍未滑动");report.Add("实际沙土 "+kind+" 位移="+(body.position-start).ToString("F4")+" 角度="+body.rotation.ToString("F2")+" 速度="+body.linearVelocity.ToString("F4")+" sleeping="+body.IsSleeping()+" 接触="+Contacts());
+    }
+    void Start(){try{Physics2D.simulationMode=SimulationMode2D.Script;report.Add("当前木头Collider="+Prefab.GetComponentsInChildren<BoxCollider2D>(true).Single(c=>Mathf.Abs(c.size.x-4.81f)<.001f).sharedMaterial.name);report.Add(string.Join(",",Enum.GetValues(typeof(PhysicsMaterialCombine2D)).Cast<PhysicsMaterialCombine2D>().Select(x=>x+"="+(int)x)));Plane(0);Plane(1);Plane(2);Plane(3);Channel("斜通道修正材质");Channel("当前方角");Channel("木头圆角");Channel("延长坡道");Channel("简化边缘");File.WriteAllLines("C:/Users/admin/AppData/Local/Temp/brainpunk-dig004-slide-20261013/diagnostics.txt",report);Debug.Log(string.Join("\n",report));EditorApplication.Exit(0);}catch(Exception e){File.WriteAllText("C:/Users/admin/AppData/Local/Temp/brainpunk-dig004-slide-20261013/failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}}
+}

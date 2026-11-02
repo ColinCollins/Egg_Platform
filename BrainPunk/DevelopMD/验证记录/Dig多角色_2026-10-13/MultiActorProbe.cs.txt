@@ -1,0 +1,38 @@
+using System;
+using System.Collections;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Game.Dig;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Events;
+public sealed class MultiActorProbe:MonoBehaviour
+{
+    const string O="C:/Users/admin/AppData/Local/Temp/brainpunk-multi-actors-20261013/";
+    static readonly BindingFlags Flags=BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public;
+    static T F<T>(object o,string n)=>(T)o.GetType().GetField(n,Flags).GetValue(o);
+    static void S(object o,string n,object v)=>o.GetType().GetField(n,Flags).SetValue(o,v);
+    GameObject live;DigLevelCtrl level;DigActorCtrl[] actors;int checks,success,failed;
+    void Check(bool value,string name){if(!value)throw new Exception(name);checks++;File.AppendAllText(O+"checks.txt","通过："+name+"\n");}
+    void Open(string path,bool clone=false,bool consume=false)
+    {
+        live=Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(path));level=live.GetComponent<DigLevelCtrl>();actors=F<DigActorCtrl[]>(level,"actors");if(actors.Length==0)actors=new[]{F<DigActorCtrl>(level,"actor")};if(clone){var second=Instantiate(actors[0],actors[0].transform.parent);S(second,"index",1);actors=new[]{actors[0],second};S(level,"actors",actors);}if(consume){S(level,"victoryCondition",DigVictoryCondition.ConsumeAllGerms);var germs=F<DigGermCtrl[]>(level,"germs");for(int i=0;i<germs.Length;i++){S(germs[i],"currentSize",5);S(germs[i],"growthSize",3);}}
+        success=failed=0;level.Resolved+=r=>{if(r==DigLevelResult.Succeeded)success++;else failed++;};level.InitializeRuntime();level.SetInputEnabled(true);level.SetPaused(false);
+    }
+    void Close(){live.SetActive(false);DestroyImmediate(live);}
+    void TickContacts()=>typeof(DigLevelCtrl).GetMethod("FixedUpdate",Flags).Invoke(level,null);
+    IEnumerator Start(){File.WriteAllText(O+"checks.txt","真实Unity多角色／旧单角色／目标变体检查\n");var run=Run();while(true){bool next;try{next=run.MoveNext();}catch(Exception e){File.WriteAllText(O+"failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);yield break;}if(!next)break;yield return run.Current;}File.AppendAllText(O+"checks.txt","总计通过 "+checks+" 项\n");EditorApplication.Exit(0);}
+    IEnumerator Run()
+    {
+        new GameObject("启动相机").AddComponent<Camera>();yield return null;yield return null;Physics2D.simulationMode=SimulationMode2D.Script;
+        Open("Assets/Game/Prefabs/DigLevel/DigLevel_003.prefab");Check(actors.Length==2&&actors.All(x=>F<DigLevelCtrl>(x,"_level")==level&&x.GetComponent<Rigidbody2D>().simulated),"003两个角色都初始化并开启物理");level.SetPaused(true);Check(actors.All(x=>!x.GetComponent<Rigidbody2D>().simulated)&&!level.TryReachTarget(actors[0],actors[0].Index),"暂停全部角色且拒绝到达");level.SetPaused(false);var foreign=Instantiate(actors[0]);Check(!level.TryReachTarget(foreign,actors[0].Index),"外来角色不接受");DestroyImmediate(foreign);Check(!level.TryReachTarget(actors[1],99),"错误编号不接受");
+        var goals=live.GetComponentsInChildren<DigTargetTrigger>(true);var goal=goals.First(x=>F<int>(x,"index")==actors[0].Index);int reached=0;F<UnityEvent>(goal,"onReached").AddListener(()=>reached++);var boxes=goal.transform.parent.GetComponentsInChildren<BoxCollider2D>(true);var bounds=boxes.Select(x=>x.bounds).ToArray();typeof(DigTargetTrigger).GetMethod("ReportArrival",Flags).Invoke(goal,new object[]{actors[0].GetComponent<CircleCollider2D>()});Check(reached==1&&!level.IsResultLocked&&!actors[0].GetComponent<Rigidbody2D>().simulated&&actors[1].GetComponent<Rigidbody2D>().simulated,"第一角色到达后只冻结本人，第二角色继续");Check(!level.TryReachTarget(actors[0],actors[0].Index),"重复到达拒绝");var fx=goal.transform.parent.GetComponent<DigPumpkinSuccessEffect>();var visual=F<Transform>(fx,"pumpkin");Check(visual.GetComponentsInChildren<Collider2D>(true).Length==0,"南瓜Visual没有碰撞体");yield return new WaitForSeconds(.1f);Physics2D.SyncTransforms();Check(visual.localScale!=Vector3.one&&boxes.Select((x,i)=>x.bounds==bounds[i]).All(x=>x),"部分到达时动效可见且全部笼子碰撞不动");yield return new WaitForSeconds(1.1f);Check(success==0&&!level.IsResultLocked,"部分到达超过1秒仍不提前胜利");level.SetPaused(true);level.SetPaused(false);Check(!actors[0].GetComponent<Rigidbody2D>().simulated&&actors[1].GetComponent<Rigidbody2D>().simulated,"暂停恢复不释放已到达角色");Check(level.TryReachTarget(actors[1],actors[1].Index)&&level.IsResultLocked&&actors.All(x=>!x.GetComponent<Rigidbody2D>().simulated),"全部到达才锁胜冻结全部");level.SetPaused(true);yield return new WaitForSeconds(1.1f);Check(success==0,"暂停胜利延迟停表");level.SetPaused(false);yield return new WaitForSeconds(1.1f);Check(success==1&&failed==0,"最终原延迟只提交一次成功");Close();
+        Open("Assets/Game/Prefabs/DigLevel/DigLevel_002.prefab");Check(actors.Length==1&&level.TryReachTarget(actors[0],actors[0].Index)&&level.IsResultLocked,"旧002单角色绑定兼容");Close();
+        Open("Assets/Game/Prefabs/DigLevel/DigLevel_001.prefab",false,true);var germs=F<DigGermCtrl[]>(level,"germs");foreach(var germ in germs)level.QueueContact(actors[0],germ);TickContacts();Check(actors[0].CurrentSize==10+3*germs.Length&&germs.All(x=>x.IsClaimed)&&!level.IsResultLocked,"旧001单角色成长并等待吞噬动画");yield return new WaitForSeconds(.35f);Check(level.IsResultLocked,"旧吞噬全清进入原胜利延迟");Close();
+        Open("Assets/Game/Prefabs/DigLevel/DigLevel_001.prefab",true,true);germs=F<DigGermCtrl[]>(level,"germs");level.QueueContact(actors[0],germs[0]);level.QueueContact(actors[1],germs[1]);TickContacts();Check(actors[0].CurrentSize==13&&actors[1].CurrentSize==13,"每角色接触和成长独立");Close();
+        Open("Assets/Game/Prefabs/DigLevel/DigLevel_001.prefab",true,true);germs=F<DigGermCtrl[]>(level,"germs");level.QueueContact(actors[0],germs[0]);level.QueueContact(actors[1],germs[0]);TickContacts();Check(actors[0].CurrentSize==13&&actors[1].CurrentSize==10&&F<int>(level,"_pendingAnimations")==1,"同病菌按角色列表顺序只认领成长一次");Close();
+        Open("Assets/Game/Prefabs/DigLevel/DigLevel_001.prefab",true,true);germs=F<DigGermCtrl[]>(level,"germs");S(germs[1],"currentSize",30);level.QueueContact(actors[0],germs[0]);level.QueueContact(actors[1],germs[1]);TickContacts();Check(level.IsResultLocked&&!germs[0].IsClaimed&&actors[0].CurrentSize==10&&actors.All(x=>!x.GetComponent<Rigidbody2D>().simulated),"任一坏批次全局优先失败并冻结全部");yield return new WaitForSeconds(.6f);Check(failed==1&&success==0,"实际失败角色死亡完成后只提交一次失败");Close();
+        foreach(string name in new[]{"DigGame_SuccessTarget","DigGame_SuccessTarget_02","DigGame_SuccessTarget_03"}){var p=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Prefabs/DigLevel/"+name+".prefab");var f=p.GetComponentInChildren<DigPumpkinSuccessEffect>(true);var v=F<Transform>(f,"pumpkin");Check(v.GetComponent<SpriteRenderer>().sprite&&v.GetComponentsInChildren<Collider2D>(true).Length==0,name+"变体Sprite覆盖和Visual引用保留");}
+    }
+}

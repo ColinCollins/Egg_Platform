@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DailyScheduleModule Debug Test Flow</title>
+    <style>
+        :root {
+            --bg: #f6f3ec;
+            --panel: #fffdf8;
+            --line: #d9d0bf;
+            --text: #202833;
+            --muted: #5c6774;
+            --accent: #9f5a2c;
+            --green: #17844a;
+            --green-soft: #dff4e7;
+            --red: #cc3c30;
+            --red-soft: #fde6e3;
+            --shadow: 0 18px 36px rgba(34, 28, 18, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(180deg, #faf7f1 0%, #efe7da 100%);
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 28px 18px 56px;
+        }
+
+        .hero, .panel, .step {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            border-radius: 24px;
+        }
+
+        .hero {
+            padding: 28px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #f4e5d8;
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        h1, h2, h3, p, ul, li { margin: 0; }
+
+        h1 {
+            margin-top: 14px;
+            font-size: clamp(30px, 4vw, 46px);
+            line-height: 1.08;
+        }
+
+        .hero p {
+            margin-top: 14px;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 860px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 320px minmax(0, 1fr);
+            gap: 18px;
+            margin-top: 20px;
+        }
+
+        .panel {
+            padding: 22px;
+            position: sticky;
+            top: 16px;
+            height: fit-content;
+        }
+
+        .panel h2 {
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .panel p,
+        .panel li {
+            color: var(--muted);
+            line-height: 1.75;
+        }
+
+        .panel ul {
+            padding-left: 18px;
+            margin-top: 12px;
+        }
+
+        .steps {
+            display: grid;
+            gap: 16px;
+        }
+
+        .step {
+            padding: 22px;
+        }
+
+        .step h2 {
+            font-size: 24px;
+        }
+
+        .step p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.75;
+        }
+
+        .cols {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            background: #fffefb;
+        }
+
+        .card h3 {
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+
+        .card p,
+        .card li {
+            color: var(--muted);
+            line-height: 1.75;
+        }
+
+        .card ul {
+            margin-top: 8px;
+            padding-left: 18px;
+        }
+
+        .code {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: #f4efe5;
+            font-family: Consolas, "SFMono-Regular", monospace;
+            font-size: 13px;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pill.green {
+            color: var(--green);
+            background: var(--green-soft);
+        }
+
+        .pill.red {
+            color: var(--red);
+            background: var(--red-soft);
+        }
+
+        @media (max-width: 960px) {
+            .grid, .cols {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <span class="tag">Current Implementation</span>
+            <h1>DailyScheduleModule 调试流程</h1>
+            <p>当前 GM 调试入口已经收敛为 2 个按钮：<span class="code">Prepare CrossDay + Check</span> 和 <span class="code">Refresh Daily Data</span>。第一个按钮会先准备跨天，再立刻执行一次 `ScheduleSystem.CheckAllModules()`；第二个按钮保留为独立复查入口。</p>
+        </section>
+
+        <div class="grid">
+            <aside class="panel">
+                <h2>当前定位</h2>
+                <p>这套调试工具用于验证 `DailyScheduleModule` 的跨天判定、`GameSchedule` 的落库结果，以及关键 daily count 的当前值。</p>
+                <ul>
+                    <li>不改系统时间</li>
+                    <li>不新增 fake refreshable</li>
+                    <li>只改 `DB.GameSchedule["Daily"]`</li>
+                    <li>只调 `ScheduleSystem.CheckAllModules()`</li>
+                </ul>
+                <ul>
+                    <li>展示 `DailyCount.InterstitialNoAdPopup`</li>
+                    <li>展示 `DailyCount.ShopFreeCoin`</li>
+                    <li>不提供 Restore</li>
+                </ul>
+            </aside>
+
+            <main class="steps">
+                <section class="step">
+                    <h2>Step 0: 先看当前状态</h2>
+                    <p>打开 GM 面板后，`GMDailyScheduleTestController` 会持续刷新调试文本，先不要点按钮，先确认当前存档状态。</p>
+                    <div class="cols">
+                        <article class="card">
+                            <h3>文本字段</h3>
+                            <ul>
+                                <li><span class="code">Now UTC</span></li>
+                                <li><span class="code">Today UTC Start</span></li>
+                                <li><span class="code">Daily Last Refresh</span></li>
+                                <li><span class="code">Daily Last Refresh (Local)</span></li>
+                            </ul>
+                        </article>
+                        <article class="card">
+                            <h3>DailyCount 字段</h3>
+                            <ul>
+                                <li><span class="code">DailyCount.InterstitialNoAdPopup</span></li>
+                                <li><span class="code">DailyCount.ShopFreeCoin</span></li>
+                            </ul>
+                        </article>
+                        <article class="card">
+                            <h3>判定字段</h3>
+                            <ul>
+                                <li><span class="code">Prediction</span></li>
+                                <li><span class="code">Prepared CrossDay</span></li>
+                                <li><span class="code">Module Registered</span></li>
+                                <li><span class="code">Last Action</span></li>
+                            </ul>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="step">
+                    <h2>Step 1: 点 Prepare CrossDay + Check</h2>
+                    <p>这个按钮是当前推荐主入口，它已经包含“准备跨天”和“立即检查”两段动作。</p>
+                    <div class="cols">
+                        <article class="card">
+                            <h3>按钮动作</h3>
+                            <ul>
+                                <li>将 `DB.GameSchedule["Daily"]` 写成昨天 UTC 0 点</li>
+                                <li>调用 `DB.SaveGameSchedule()`</li>
+                                <li>立即调用 `ScheduleSystem.CheckAllModules()`</li>
+                            </ul>
+                        </article>
+                        <article class="card">
+                            <h3>预期变化</h3>
+                            <ul>
+                                <li>`Daily Last Refresh` 推进到今天 UTC 0 点</li>
+                                <li>`Prediction` 变成 <span class="pill.red">Should Skip</span></li>
+                                <li>`Last Action` 记录 before / after 时间</li>
+                            </ul>
+                        </article>
+                        <article class="card">
+                            <h3>同时可观察</h3>
+                            <ul>
+                                <li>两个 `DailyCount` 当前值</li>
+                                <li>哪些计数没有被清零</li>
+                                <li>是否存在模块未注册问题</li>
+                            </ul>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="step">
+                    <h2>Step 2: 点 Refresh Daily Data 复查</h2>
+                    <p>如果需要确认“同一天再次检查不会重复触发”，再点一次独立复查按钮。</p>
+                    <div class="cols">
+                        <article class="card">
+                            <h3>按钮动作</h3>
+                            <ul>
+                                <li>确保 `DailyScheduleModule` 已注册</li>
+                                <li>直接调用 `ScheduleSystem.CheckAllModules()`</li>
+                            </ul>
+                        </article>
+                        <article class="card">
+                            <h3>预期变化</h3>
+                            <ul>
+                                <li>`Daily Last Refresh` 不应继续变化</li>
+                                <li>`Prediction` 保持 <span class="pill.red">Should Skip</span></li>
+                            </ul>
+                        </article>
+                        <article class="card">
+                            <h3>说明</h3>
+                            <p>如果 `Daily` 时间戳已经推进，但某个业务 count 没变化，优先怀疑对应模块没有在这次检查时注册到 `DailyScheduleModule`。</p>
+                        </article>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

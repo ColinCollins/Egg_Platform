@@ -1,0 +1,38 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Game.Dig;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+public static class TerrainCollectRunner
+{
+    static readonly List<string> checks=new List<string>();
+    static FieldInfo Field(string name)=>typeof(DigTerrainCtrl).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic);
+    static T Get<T>(DigTerrainCtrl t,string name)=>(T)Field(name).GetValue(t);
+    static void Set(DigTerrainCtrl t,string name,object value)=>Field(name).SetValue(t,value);
+    static void Collect(DigTerrainCtrl t)=>typeof(DigTerrainCtrl).GetMethod("CollectHoleSources",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(t,null);
+    static void Check(bool ok,string name){if(!ok)throw new Exception(name);checks.Add("通过："+name);}
+    public static void Run()
+    {
+        try
+        {
+            var stage=PrefabStageUtility.OpenPrefab("Assets/Game/Prefabs/DigLevel/DigLevel_004.prefab");GameObjectUtility.RemoveMonoBehavioursWithMissingScript(stage.prefabContentsRoot);var terrain=stage.prefabContentsRoot.GetComponent<DigTerrainCtrl>();var all=terrain.GetComponentsInChildren<BaseDigComp>(true).Where(x=>x.GetComponentInParent<DigTerrainCtrl>(true)==terrain).ToArray();
+            Check(all.Length>=4&&all.Any(x=>x is DigActorCtrl)&&all.Any(x=>x.GetType()==typeof(BaseDigComp)),"004收集范围包含Base本身和Actor派生组件");
+            var mask=Get<Game.Scripts.Effects.SceneSpriteBrushClear>(terrain,"visual").InitialMask;var baked=Get<bool>(terrain,"mapBaked");
+            Set(terrain,"spawnHoles",Array.Empty<BaseDigComp>());Set(terrain,"reservedHoles",new[]{all[0]});EditorUtility.SetDirty(terrain);Undo.ClearAll();Collect(terrain);Undo.FlushUndoRecordObjects();
+            Check(Get<BaseDigComp[]>(terrain,"spawnHoles").SequenceEqual(all)&&Get<BaseDigComp[]>(terrain,"reservedHoles").Length==0,"全部写Spawn且清Reserved避免重复");
+            Undo.PerformUndo();Check(Get<BaseDigComp[]>(terrain,"spawnHoles").Length==0&&Get<BaseDigComp[]>(terrain,"reservedHoles").Length==1,"Undo还原两个数组");
+            var inactive=all.First(x=>x.transform!=terrain.transform);bool wasActive=inactive.gameObject.activeSelf;inactive.gameObject.SetActive(false);
+            var nested=new GameObject("仅TEMP嵌套地形边界");nested.transform.SetParent(terrain.transform,false);nested.AddComponent<DigTerrainCtrl>();nested.AddComponent<BaseDigComp>();
+            Collect(terrain);Check(Get<BaseDigComp[]>(terrain,"spawnHoles").Contains(inactive),"inactive来源可再次收集");Check(Get<BaseDigComp[]>(terrain,"spawnHoles").SequenceEqual(all),"排除嵌套Terrain来源");UnityEngine.Object.DestroyImmediate(nested);inactive.gameObject.SetActive(wasActive);
+            var sample=new GameObject("仅TEMP派生Germ标记");sample.transform.SetParent(terrain.transform,false);var germ=sample.AddComponent<DigGermCtrl>();Collect(terrain);Check(Get<BaseDigComp[]>(terrain,"spawnHoles").Contains(germ),"按Base类型包含Germ派生组件");UnityEngine.Object.DestroyImmediate(sample);Collect(terrain);Collect(terrain);
+            Check(Get<BaseDigComp[]>(terrain,"spawnHoles").SequenceEqual(all),"重复收集不累计引用并移除已删除来源");Check(mask==Get<Game.Scripts.Effects.SceneSpriteBrushClear>(terrain,"visual").InitialMask&&baked==Get<bool>(terrain,"mapBaked"),"收集不烘焙或改变初始地图引用");
+            typeof(PrefabStage).GetMethod("SavePrefab",BindingFlags.Instance|BindingFlags.NonPublic,null,Type.EmptyTypes,null).Invoke(stage,null);StageUtility.GoToMainStage();stage=PrefabStageUtility.OpenPrefab("Assets/Game/Prefabs/DigLevel/DigLevel_004.prefab");terrain=stage.prefabContentsRoot.GetComponent<DigTerrainCtrl>();Check(Get<BaseDigComp[]>(terrain,"spawnHoles").Length==all.Length&&Get<BaseDigComp[]>(terrain,"spawnHoles").All(x=>x)&&Get<BaseDigComp[]>(terrain,"reservedHoles").Length==0,"保存重开保留有效来源引用");
+            File.WriteAllLines("C:/Users/admin/AppData/Local/Temp/brainpunk-dig-terrain-collect-20261013/checks.txt",checks);Debug.Log("Terrain收集检查通过 "+checks.Count+" 项");EditorApplication.Exit(0);
+        }
+        catch(Exception e){File.WriteAllText("C:/Users/admin/AppData/Local/Temp/brainpunk-dig-terrain-collect-20261013/failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}
+    }
+}

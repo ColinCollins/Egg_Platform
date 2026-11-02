@@ -1,0 +1,59 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Game.Dig;
+using UnityEditor;
+using UnityEngine;
+public sealed class GermColliderProbe:MonoBehaviour
+{
+    public GameObject GermPrefab;
+    public GameObject LevelPrefab;
+    static readonly List<string> checks=new List<string>();
+    static FieldInfo Field(object x,string name)=>x.GetType().GetField(name,BindingFlags.NonPublic|BindingFlags.Instance);
+    static T Get<T>(object x,string name)=>(T)Field(x,name).GetValue(x);
+    static void Set(object x,string name,object value)=>Field(x,name).SetValue(x,value);
+    static void Check(bool good,string text){if(!good)throw new Exception(text);checks.Add("通过："+text);}
+    public static void Run()
+    {
+        try
+        {
+            var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Prefabs/DigLevel/DigGerm_001.prefab");var germ=prefab.GetComponent<DigGermCtrl>();var binding=new SerializedObject(germ);
+            Check(binding.FindProperty("contactCollider").objectReferenceValue==prefab.GetComponent<CircleCollider2D>(),"旧circle字段自动迁移为通用引用");
+            var probe=new GameObject("仅TEMP Germ通用Collider验证").AddComponent<GermColliderProbe>();probe.GermPrefab=prefab;probe.LevelPrefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Game/Prefabs/DigLevel/DigLevel_001.prefab");EditorApplication.isPlaying=true;
+        }
+        catch(Exception e){Fail(e);}
+    }
+    static void Fail(Exception e){File.WriteAllText("C:/Users/admin/AppData/Local/Temp/brainpunk-germ-collider-20261013/failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}
+    IEnumerator Start()
+    {
+        Physics2D.simulationMode=SimulationMode2D.Script;
+        GameObject circleObject=null;DigGermCtrl circleGerm=null;
+        try
+        {
+            circleObject=Instantiate(GermPrefab);circleGerm=circleObject.GetComponent<DigGermCtrl>();circleGerm.Initialize();float radius=.35f*DigSizeRules.ScaleFor(5);
+            Check(Mathf.Abs(circleObject.GetComponent<CircleCollider2D>().radius-radius)<.00001f,"Circle仍按原半径映射");Check(Vector3.Distance(Get<Transform>(circleGerm,"body").localScale,Vector3.one*(radius*2))<.00001f,"Body视觉保留原缩放");
+            for(int kind=0;kind<3;kind++)
+            {
+                var levelObject=Instantiate(LevelPrefab);var level=levelObject.GetComponent<DigLevelCtrl>();var germs=Get<DigGermCtrl[]>(level,"germs");var target=germs[0];var go=target.gameObject;
+                UnityEngine.Object.DestroyImmediate(go.GetComponent<CircleCollider2D>());Collider2D shape;
+                if(kind==0){var box=go.AddComponent<BoxCollider2D>();box.size=new Vector2(.62f,.38f);shape=box;}
+                else if(kind==1){var capsule=go.AddComponent<CapsuleCollider2D>();capsule.size=new Vector2(.45f,.8f);shape=capsule;}
+                else{var polygon=go.AddComponent<PolygonCollider2D>();polygon.points=new[]{new Vector2(-.3f,-.2f),new Vector2(.4f,-.2f),new Vector2(.1f,.4f)};shape=polygon;}
+                shape.offset=new Vector2(.03f,.02f);shape.isTrigger=true;Set(target,"contactCollider",shape);level.InitializeRuntime();
+                Check(shape.offset==new Vector2(.03f,.02f),shape.GetType().Name+"保留Offset");
+                if(shape is BoxCollider2D b)Check(b.size==new Vector2(.62f,.38f),"Box尺寸保持");if(shape is CapsuleCollider2D c)Check(c.size==new Vector2(.45f,.8f),"Capsule尺寸保持");if(shape is PolygonCollider2D p)Check(p.points[2]==new Vector2(.1f,.4f),"Polygon轮廓保持");
+                var actor=Get<DigActorCtrl>(level,"actor");var actorCircle=actor.GetComponent<CircleCollider2D>();foreach(var collider in levelObject.GetComponentsInChildren<Collider2D>(true))if(collider!=actorCircle&&collider!=shape)collider.enabled=false;
+                level.SetPaused(false);var body=Get<Rigidbody2D>(actor,"physicsBody");body.gravityScale=0;body.position=Vector2.zero;go.transform.position=Vector3.zero;Physics2D.SyncTransforms();Physics2D.Simulate(.02f);typeof(DigLevelCtrl).GetMethod("FixedUpdate",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(level,null);
+                Check(target.IsClaimed&&!shape.enabled,shape.GetType().Name+"真实接触被认领并关闭碰撞");Check(actor.CurrentSize==10+target.GrowthSize,"成长仍只结算一次");Check(!target.TryClaim(),"重复认领拒绝");levelObject.SetActive(false);Destroy(levelObject);
+            }
+        }
+        catch(Exception e){Fail(e);yield break;}
+        int callbacks=0;circleGerm.TryClaim();circleGerm.PlayConsume(transform,()=>callbacks++);yield return new WaitForSeconds(.36f);
+        try{Check(callbacks==1&&!circleObject.activeSelf,"吸入完成仍一次回调并隐藏");var canceled=Instantiate(GermPrefab);var germ=canceled.GetComponent<DigGermCtrl>();germ.Initialize();germ.TryClaim();germ.PlayConsume(transform,()=>callbacks++);germ.StopConsumption();}
+        catch(Exception e){Fail(e);yield break;}
+        yield return new WaitForSeconds(.36f);
+        try{Check(callbacks==1,"取消不补发完成回调");File.WriteAllLines("C:/Users/admin/AppData/Local/Temp/brainpunk-germ-collider-20261013/checks.txt",checks);Debug.Log("Germ通用Collider检查通过 "+checks.Count+" 项");EditorApplication.Exit(0);}catch(Exception e){Fail(e);}
+    }
+}

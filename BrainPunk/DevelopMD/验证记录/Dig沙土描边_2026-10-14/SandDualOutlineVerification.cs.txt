@@ -1,0 +1,144 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+using Game.Dig;
+using Game.Scripts.Effects;
+
+public static class SandDualOutlineVerification
+{
+    const string Output = "C:/Users/admin/AppData/Local/Temp/brainpunk-dig-compress-20261013/";
+    static readonly List<string> Checks = new List<string>();
+    static readonly BindingFlags Flags = BindingFlags.Instance | BindingFlags.NonPublic;
+    static void Check(bool value, string label) { if (!value) throw new Exception(label); Checks.Add("通过：" + label); }
+    static Texture2D Render(Texture2D source, Material material, string name)
+    {
+        var rt = new RenderTexture(source.width, source.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        rt.Create();
+        // 外扩顶点需要真实相机的屏幕参数，使用SpriteRenderer而非没有有效投影的Blit夹具。
+        var sprite = Sprite.Create(source,new Rect(0,0,source.width,source.height),new Vector2(0.5f,0.5f),128,0,SpriteMeshType.FullRect);
+        var go = new GameObject("描边像素夹具");var sr=go.AddComponent<SpriteRenderer>();sr.sprite=sprite;sr.sharedMaterial=material;
+        if(material.HasProperty("_SpriteLocalRect"))material.SetVector("_SpriteLocalRect",new Vector4(sprite.bounds.min.x,sprite.bounds.min.y,sprite.bounds.size.x,sprite.bounds.size.y));
+        var cameraObject=new GameObject("描边像素相机");var camera=cameraObject.AddComponent<Camera>();camera.orthographic=true;camera.orthographicSize=source.height/256f;camera.transform.position=new Vector3(0,0,-10);camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.clear;camera.targetTexture=rt;camera.allowHDR=false;camera.allowMSAA=false;camera.Render();
+        var previous = RenderTexture.active; RenderTexture.active = rt;
+        var result = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false, true);
+        result.ReadPixels(new Rect(0,0,rt.width,rt.height), 0, 0); result.Apply();
+        RenderTexture.active = previous;
+        File.WriteAllBytes(Output + "dual-" + name + ".png", result.EncodeToPNG());
+        rt.Release(); UnityEngine.Object.DestroyImmediate(rt);
+        UnityEngine.Object.DestroyImmediate(go);UnityEngine.Object.DestroyImmediate(cameraObject);UnityEngine.Object.DestroyImmediate(sprite);
+        return result;
+    }
+    public static void Run()
+    {
+        try
+        {
+            UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline=null;QualitySettings.renderPipeline=null;
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Game/ArtSrc/Shader/Sprites/DigSand.shader");
+            Check(shader && shader.isSupported && !ShaderUtil.ShaderHasError(shader), "Dig/Sand桌面Shader编译与支持");
+            var material = new Material(shader);
+            Check(material.GetColor("_OutlineColor").r == 0.5137255f && material.GetColor("_OutlineColor").g == 0.3215686f, "默认描边颜色835233");
+            const int w=256,h=128;
+            var source = new Texture2D(w,h,TextureFormat.RGBA32,false,true) { filterMode=FilterMode.Bilinear, wrapMode=TextureWrapMode.Clamp };
+            var mask = new Texture2D(w,h,TextureFormat.RGBA32,false,true) { filterMode=FilterMode.Bilinear, wrapMode=TextureWrapMode.Clamp };
+            var pixels = new Color32[w*h]; var maskPixels=new Color32[w*h];
+            for(int y=0;y<h;y++)for(int x=0;x<w;x++)
+            {
+                pixels[y*w+x]=new Color32(205,168,104,(byte)(x>8&&x<w-9&&y>8&&y<h-9?255:0));
+                bool hole=(x-w/2)*(x-w/2)+(y-h/2)*(y-h/2)<25*25;
+                maskPixels[y*w+x]=hole?new Color32(255,255,255,255):new Color32(0,0,0,255);
+            }
+            source.SetPixels32(pixels);source.Apply();mask.SetPixels32(maskPixels);mask.Apply();
+            material.SetTexture("_MaskTex",mask); material.SetFloat("_NoiseStrength",0);material.SetFloat("_NoiseOpacity",0);
+            var baselineMat=new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/Game/ArtSrc/Shader/Sprites/MaskRTSprite.shader"));
+            baselineMat.SetTexture("_MaskTex",mask);
+            var baseline=Render(source,baselineMat,"sand-baseline").GetPixels32();
+            material.SetFloat("_InnerOutlineWidth",0); material.SetFloat("_OuterOutlineWidth",0);
+            Check(baseline.SequenceEqual(Render(source,material,"sand-disabled").GetPixels32()),"描边关闭时逐像素恢复原Shader");
+            material.SetFloat("_OuterOutlineWidth",5);
+            var outlined=Render(source,material,"sand-outlined").GetPixels32();
+            Check(Enumerable.Range(0,baseline.Length).Where(i=>baseline[i].a==255).All(i=>outlined[i].Equals(baseline[i])),"外描边保留全部原实心像素颜色");
+            Check(outlined[h/2*w+w/2].a==0,"洞中心完全透明");
+            Check(outlined[h/2*w+64].Equals(baseline[h/2*w+64]),"远离边缘的沙土中心保留原色");
+            Check(outlined[h/2*w+w/2+23].a>0 && baseline[h/2*w+w/2+23].a==0,"洞口描边外扩进透明区");
+            Check(outlined[h/2*w+7].a>0 && baseline[h/2*w+7].a==0,"图片描边外扩进透明区");
+            Check(outlined[h/2*w+1].a==0,"远离外轮廓的透明区仍透明");
+            material.SetTexture("_NoiseTex", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Noise/MMBrushNoise.png"));
+            material.SetFloat("_NoiseStrength",1);material.SetFloat("_NoiseOpacity",0.7f);material.SetFloat("_NoiseScale",4);
+            var noisy=Render(source,material,"sand-noisy").GetPixels32();
+            Check(Enumerable.Range(0,noisy.Length).Count(i=>!noisy[i].Equals(outlined[i]))>20,"Noise参数改变笔触宽度与浓淡");
+            material.SetFloat("_OuterOutlineWidth",0);material.SetFloat("_InnerOutlineWidth",5);material.SetFloat("_NoiseStrength",0);material.SetFloat("_NoiseOpacity",0);
+            var inner=Render(source,material,"sand-inner").GetPixels32();
+            Check(Enumerable.Range(0,baseline.Length).All(i=>baseline[i].a==inner[i].a),"外宽度0只显示内描边并保留原Alpha");
+            material.SetFloat("_InnerOutlineWidth",3);material.SetFloat("_OuterOutlineWidth",5);
+            var both=Render(source,material,"sand-both").GetPixels32();
+            Check(both[h/2*w+11].r<baseline[h/2*w+11].r && both[h/2*w+7].a>0,"图片内外描边同时显示");
+            Check(both[h/2*w+w/2+27].r<baseline[h/2*w+w/2+27].r && both[h/2*w+w/2+23].a>0,"洞口内外描边同时显示");
+            material.SetFloat("_OuterOutlineWidth",8);
+            var wideOuter=Render(source,material,"sand-both-wide-outer").GetPixels32();
+            Check(Enumerable.Range(0,baseline.Length).Where(i=>baseline[i].a==255).All(i=>both[i].Equals(wideOuter[i])),"调宽外描边不改变内描边");
+            material.SetFloat("_OuterOutlineWidth",5);material.SetFloat("_InnerOutlineWidth",7);
+            var wideInner=Render(source,material,"sand-both-wide-inner").GetPixels32();
+            Check(Enumerable.Range(0,baseline.Length).Where(i=>baseline[i].a==0).All(i=>both[i].Equals(wideInner[i])),"调宽内描边不改变外描边");
+            material.SetFloat("_InnerOutlineWidth",0);
+            Check(outlined.SequenceEqual(Render(source,material,"sand-only-outer").GetPixels32()),"内宽度0独立关闭内描边");
+            material.SetFloat("_InnerOutlineWidth",5);material.SetFloat("_OuterOutlineWidth",0);
+            Check(inner.SequenceEqual(Render(source,material,"sand-only-inner").GetPixels32()),"外宽度0独立关闭外描边");
+            // 真正SpriteRenderer的原矩形外缘，验证顶点扩展不被网格裁掉。
+            UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline=null;QualitySettings.renderPipeline=null;
+            var shapeTexture=new Texture2D(32,32,TextureFormat.RGBA32,false,true);shapeTexture.SetPixels(Enumerable.Repeat(Color.white,1024).ToArray());shapeTexture.Apply();
+            var shape=Sprite.Create(shapeTexture,new Rect(0,0,32,32),new Vector2(0.5f,0.5f),32,0,SpriteMeshType.FullRect);
+            var go=new GameObject("描边渲染验证");var spriteRenderer=go.AddComponent<SpriteRenderer>();spriteRenderer.sprite=shape;go.transform.localScale=new Vector3(2,1,1);
+            var spriteMaterial=new Material(shader);spriteMaterial.SetFloat("_InnerOutlineWidth",0);spriteMaterial.SetFloat("_NoiseStrength",0);spriteMaterial.SetFloat("_NoiseOpacity",0);spriteRenderer.sharedMaterial=spriteMaterial;
+            var cameraObject=new GameObject("描边验证相机");var camera=cameraObject.AddComponent<Camera>();camera.orthographic=true;camera.orthographicSize=1;camera.transform.position=new Vector3(0,0,-10);camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.clear;
+            var target=new RenderTexture(256,128,0,RenderTextureFormat.ARGB32,RenderTextureReadWrite.Linear);target.Create();camera.targetTexture=target;camera.Render();
+            var prior=RenderTexture.active;RenderTexture.active=target;var rendered=new Texture2D(256,128,TextureFormat.RGBA32,false,true);rendered.ReadPixels(new Rect(0,0,256,128),0,0);rendered.Apply();RenderTexture.active=prior;
+            File.WriteAllBytes(Output+"sand-sprite-outer.png",rendered.EncodeToPNG());
+            Check(rendered.GetPixel(61,64).a>0 && rendered.GetPixel(56,64).a==0,"SpriteRenderer网格外能显示描边且宽度约5像素");
+            Check(rendered.GetPixel(128,29).a>0 && rendered.GetPixel(128,24).a==0,"非等比缩放下竖向外描边同为约5像素");
+            var rp=AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset>("Assets/Settings/UniversalRP.asset");
+            UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline=rp;QualitySettings.renderPipeline=rp;
+            UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera,new UnityEngine.Rendering.Universal.UniversalRenderPipeline.SingleCameraRequest { destination=target });
+            prior=RenderTexture.active;RenderTexture.active=target;rendered.ReadPixels(new Rect(0,0,256,128),0,0);rendered.Apply();RenderTexture.active=prior;
+            File.WriteAllBytes(Output+"sand-urp-outer.png",rendered.EncodeToPNG());
+            Check(rendered.GetPixel(61,64).a>0 && rendered.GetPixel(56,64).a==0,"URP17 Renderer2D实际外缘描边");
+            Check(rendered.GetPixel(128,29).a>0 && rendered.GetPixel(128,24).a==0,"URP17非等比缩放下竖向外描边");
+            UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline=null;QualitySettings.renderPipeline=null;
+            UnityEngine.Object.DestroyImmediate(go);UnityEngine.Object.DestroyImmediate(cameraObject);target.Release();
+            var root=PrefabUtility.LoadPrefabContents("Assets/Game/Prefabs/DigLevel/DigLevel_002.prefab");
+            try
+            {
+                var terrain=root.GetComponent<DigTerrainCtrl>();
+                var visual=(SceneSpriteBrushClear)typeof(DigTerrainCtrl).GetField("visual",Flags).GetValue(terrain);
+                var sr=visual.GetComponent<SpriteRenderer>();
+                var template=AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Prefabs/DigLevel/Maps/DigLevel_002_MapPreview.mat");
+                var settings=new SerializedObject(visual);settings.FindProperty("displayShader").objectReferenceValue=shader;settings.FindProperty("displayMaterial").objectReferenceValue=template;settings.ApplyModifiedPropertiesWithoutUndo();
+                template.SetFloat("_InnerOutlineWidth",7);template.SetFloat("_OuterOutlineWidth",9); template.SetFloat("_NoiseStrength",0.73f);
+                typeof(SceneSpriteBrushClear).GetField("_sr",Flags).SetValue(visual,sr);
+                typeof(SceneSpriteBrushClear).GetField("_sprite",Flags).SetValue(visual,sr.sprite);
+                typeof(SceneSpriteBrushClear).GetMethod("EnsureMaterials",Flags).Invoke(visual,null);
+                var runtime=(Material)typeof(SceneSpriteBrushClear).GetField("_displayMat",Flags).GetValue(visual);
+                Check(runtime!=template && runtime.shader==shader && runtime.GetFloat("_InnerOutlineWidth")==7 && runtime.GetFloat("_OuterOutlineWidth")==9 && runtime.GetFloat("_NoiseStrength")==0.73f,"运行显示材质复制独立模板与调整参数");
+                terrain.InitMapFromPrefabAsset("Assets/Game/Prefabs/DigLevel/DigLevel_002.prefab");
+                Check(template.GetFloat("_InnerOutlineWidth")==7 && template.GetFloat("_OuterOutlineWidth")==9 && template.GetFloat("_NoiseStrength")==0.73f,"InitMap保留已有描边风格参数");
+                Check(new SerializedObject(visual).FindProperty("displayMaterial").objectReferenceValue==template,"InitMap保存显式模板引用");
+                var runtimeMask=new RenderTexture(512,512,0,RenderTextureFormat.R8); runtimeMask.Create();
+                typeof(SceneSpriteBrushClear).GetField("_maskRT",Flags).SetValue(visual,runtimeMask);
+                typeof(SceneSpriteBrushClear).GetMethod("ApplyMaskToMaterial",Flags).Invoke(visual,null);
+                Check(runtime.GetTexture("_MaskTex")==runtimeMask && runtime.GetFloat("_InnerOutlineWidth")==7 && runtime.GetFloat("_OuterOutlineWidth")==9,"运行遮罩绑定保留风格参数");
+                typeof(SceneSpriteBrushClear).GetMethod("DestroyMaterials",Flags).Invoke(visual,null);
+                typeof(SceneSpriteBrushClear).GetMethod("EnsureMaterials",Flags).Invoke(visual,null);
+                runtime=(Material)typeof(SceneSpriteBrushClear).GetField("_displayMat",Flags).GetValue(visual);
+                Check(runtime && runtime.GetFloat("_InnerOutlineWidth")==7 && runtime.GetFloat("_OuterOutlineWidth")==9,"材质释放后重建继续使用模板");
+                runtimeMask.Release();
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            File.WriteAllLines(Output+"sand-dual-outline-checks.txt",Checks);
+            Debug.Log("SAND_DUAL_OUTLINE_PASS="+Checks.Count);EditorApplication.Exit(0);
+        }
+        catch(Exception e) { File.WriteAllLines(Output+"sand-dual-outline-checks.txt",Checks);Debug.LogException(e);EditorApplication.Exit(1); }
+    }
+}

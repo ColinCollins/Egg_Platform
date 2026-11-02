@@ -1,0 +1,41 @@
+---
+description: Unity C# naming and style rules based on Unity tips
+globs: **/*.cs
+alwaysApply: false
+---
+
+# Unity C# Naming And Style
+
+Follow Unity's C# naming and style guidance. Prefer readability and team consistency.
+
+## Naming
+- Use `PascalCase` for classes, methods, properties, enums, and public fields.
+- Use `camelCase` for local variables and method parameters.
+- Use clear noun names for variables and fields; avoid unclear abbreviations.
+- For `bool`, use verb-style names: `isDead`, `hasKey`, `canMove`.
+- Do not use Hungarian notation like `strName`, `iCount`.
+
+## Types And Files
+- If a file contains a `MonoBehaviour`, file name must match that class name.
+- Interface names start with `I` and use `PascalCase` (e.g. `IDamageable`).
+- Enum type names should be singular (flags enums can be plural).
+
+## Methods
+- Method names start with verbs (e.g. `LoadConfig`, `FindTarget`).
+- Methods returning `bool` should read like questions (`IsGameOver`, `HasTarget`).
+- Keep methods short and focused; split when one method does too many things.
+
+## Fields And Access
+- Prefer `[SerializeField] private` over public mutable fields.
+- Use properties for controlled external access when needed.
+- Be consistent with access modifiers; do not mix implicit and explicit style randomly.
+
+## Events
+- Name events with verb phrases that express state change (`DoorOpened`, `OpeningDoor`).
+- Raise events from `On...` methods (e.g. `OnDoorOpened()`).
+- Use `System.Action` for simple event payloads; add custom args only when needed.
+
+## Namespaces
+- Use `PascalCase` namespaces and organize by feature (e.g. `Game.UI.Loading`).
+- Add `using` directives to reduce repeated fully qualified names.
+- When name conflicts exist, use namespace prefixes explicitly.

@@ -1,0 +1,61 @@
+VICTORY CHECK 1: Unity新组件的真实默认配置
+VICTORY CHECK 2: 001吞噬默认及一秒延迟
+VICTORY CHECK 3: Actor默认index与大小隔离
+VICTORY CHECK 4: 吞噬未完成与目标模式隔离
+VICTORY CHECK 5: 实际Actor源Prefab导入新增index
+VICTORY CHECK 6: 到达模式允许null／零病菌且不能用吞噬判胜
+VICTORY CHECK 7: 真实Trigger不同index不结束
+VICTORY CHECK 8: 真实Stay相同index立即锁定但未提交
+VICTORY CHECK 9: 等待胜利期间冻结主角并关闭挖掘
+VICTORY CHECK 10: 等待期间重复目标及金币跳关不重入
+VICTORY CHECK 11: 默认一秒不会在半秒提前提交
+VICTORY CHECK 12: 到达模式默认一秒后唯一成功
+VICTORY CHECK 13: 连续Update不重复提交成功
+VICTORY CHECK 14: 自定义延迟尚未到点
+VICTORY CHECK 15: 自定义延迟到点成功
+VICTORY CHECK 16: 零延迟即时成功但仍锁结果
+VICTORY CHECK 17: 达成目标同时暂停未完成成长动画
+VICTORY CHECK 18: 手动暂停不推进延迟
+VICTORY CHECK 19: 恢复等待不解冻物理或成长Tween
+VICTORY CHECK 20: 暂停恢复后继续剩余延迟
+VICTORY CHECK 21: 成功提交后Resume也不重开成长动画
+VICTORY CHECK 22: 系统后台不推进延迟
+VICTORY CHECK 23: 后台恢复后成功一次
+VICTORY CHECK 24: 禁用取消等待且不补发旧结果
+VICTORY CHECK 25: 重建新实例与旧等待隔离
+VICTORY CHECK 26: 相同index但不是本关绑定Actor不能触发
+VICTORY CHECK 27: 无Actor组件的刚体不触发
+VICTORY CHECK 28: 禁用目标脚本收到物理回调也不判胜
+VICTORY CHECK 29: 启用后Stay重新核验目标
+VICTORY CHECK 30: 子Collider物理附着到Actor刚体
+VICTORY CHECK 31: 真实子Collider通过attachedRigidbody识别Actor
+VICTORY CHECK 32: 目标Collider未勾Trigger不得胜利
+VICTORY CHECK 33: 未绑定所属关卡不得胜利
+VICTORY CHECK 34: 目标Collider必须绑定脚本同节点
+VICTORY CHECK 35: index仅作匹配不擅自限制编号范围
+VICTORY CHECK 36: 吞噬模式碰到同index目标不提前结束
+VICTORY CHECK 37: 最后病菌认领后仍等待吸入动画
+VICTORY CHECK 38: 全部动画结束后吞噬进入同一延迟入口
+VICTORY CHECK 39: 吞噬模式统一延迟成功
+VICTORY CHECK 40: 未吃完全部病菌不能启动胜利等待
+VICTORY CHECK 41: 倒数第二只吞噬后不成功
+VICTORY CHECK 42: 多病菌全部吞噬后成功且成长保持
+VICTORY CHECK 43: 到达模式吃完病菌不提前胜利
+VICTORY CHECK 44: 到达模式有病菌时仍只由目标胜利
+VICTORY CHECK 45: 到达时未完成吞噬动画也冻结
+VICTORY CHECK 46: 到达后旧吞噬回调不重复胜利
+VICTORY CHECK 47: 同物理步目标达成先锁结果并清未处理接触
+VICTORY CHECK 48: 同物理步目标优先结果不随接触回调顺序改变
+VICTORY CHECK 49: 同批次大者优先失败不吞小者
+VICTORY CHECK 50: 失败仍按死亡动画提交没有胜利延迟
+VICTORY CHECK 51: 失败已锁后目标不可覆盖
+VICTORY CHECK 52: 到达模式死亡链仍有效
+VICTORY CHECK 53: 金币跳关也进入统一等待 ConsumeAllGerms
+VICTORY CHECK 54: 金币跳关统一延迟提交 ConsumeAllGerms
+VICTORY CHECK 55: 金币跳关也进入统一等待 ReachTarget
+VICTORY CHECK 56: 金币跳关统一延迟提交 ReachTarget
+VICTORY CHECK 57: 暂停时到达请求拒绝
+VICTORY CHECK 58: 后台时到达请求拒绝
+VICTORY CHECK 59: 拒绝非法延迟避免永久锁住 -1
+VICTORY CHECK 60: 拒绝非法延迟避免永久锁住 NaN
+VICTORY CHECK 61: 拒绝非法延迟避免永久锁住 Infinity

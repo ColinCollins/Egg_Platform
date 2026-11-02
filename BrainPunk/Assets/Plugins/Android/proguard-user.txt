@@ -1,0 +1,126 @@
+-keep class com.unity3d.plugin.* { *; }
+
+#proguard-adjust.pro
+-keep public class com.adjust.sdk.** { *; }
+-keep class com.amazon.device.ads.** { *; } 
+-keep class com.amazon.aps.** { *; } 
+-keep class com.google.android.gms.ads.identifier.AdvertisingIdClient {
+    com.google.android.gms.ads.identifier.AdvertisingIdClient$Info getAdvertisingIdInfo(android.content.Context);
+}
+-keep class com.google.android.gms.ads.identifier.AdvertisingIdClient$Info {
+    java.lang.String getId();
+    boolean isLimitAdTrackingEnabled();
+}
+-keep public class com.android.installreferrer.** { *; }
+-keepclassmembers class com.ironsource.sdk.controller.IronSourceWebView$JSInterface {
+    public *;
+}
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final android.os.Parcelable$Creator *;
+}
+-keep public class com.google.android.gms.ads.** {
+    public *;
+}
+-keep class com.ironsource.adapters.** { *; }
+-dontwarn com.ironsource.mediationsdk.**
+-dontwarn com.ironsource.adapters.**
+-keepattributes JavascriptInterface
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+-keep class dalvik.system.VMRuntime {
+    java.lang.String getRuntime();
+}
+-keep class android.os.Build {
+    java.lang.String[] SUPPORTED_ABIS;
+    java.lang.String CPU_ABI;
+}
+-keep class android.content.res.Configuration {
+    android.os.LocaleList getLocales();
+    java.util.Locale locale;
+}
+-keep class android.os.LocaledList {
+    java.util.Locale get(int);
+}
+
+#proguard-facebook.pro
+-keep class com.facebook.** { *; }
+-keepattributes Signature
+-keep,allowobfuscation @interface com.facebook.common.internal.DoNotStrip
+-keep @com.facebook.common.internal.DoNotStrip class *
+-keep class com.facebook.stetho.** { *; }
+-keepclassmembers class * {
+    @com.facebook.common.internal.DoNotStrip *;
+}
+-keepclassmembers class * {
+    native <methods>;
+}
+-dontwarn okio.**
+-dontwarn javax.annotation.**
+-dontwarn com.android.volley.toolbox.**
+
+-keep class com.bytedance.sdk.** { *; }
+-keep class com.pgl.sys.ces.* { *; }
+-keep class com.facebook.** { *; }
+-keep class com.google.android.play.core.** { *; }
+-keep class com.google.games.bridge.** { *; }
+-keep class com.google.android.gms.** { *; }
+-keep class com.google.android.gms.games.leaderboard.** { *; }
+-keep class com.google.android.gms.games.snapshot.** { *; }
+-keep class com.google.android.gms.games.achievement.** { *; }
+-keep class com.google.android.gms.games.event.** { *; }
+-keep class com.google.android.gms.games.stats.** { *; }
+-keep class com.google.android.gms.games.video.** { *; }
+-keep class com.google.android.gms.games.* { *; }
+-keep class com.google.android.gms.common.api.ResultCallback { *; }
+-keep class com.google.android.gms.signin.** { *; }
+-keep class com.google.android.gms.dynamic.** { *; }
+-keep class com.google.android.gms.dynamite.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+-keep class com.google.android.gms.security.** { *; }
+-keep class com.google.android.gms.base.** { *; }
+-keep class com.google.android.gms.actions.** { *; }
+-keep class com.google.android.gms.common.ConnectionResult { *; }
+-keep class com.google.android.gms.common.GooglePlayServicesUtil { *; }
+-keep class com.google.android.gms.common.api.** { *; }
+-keep class com.google.android.gms.common.data.DataBufferUtils { *; }
+-keep class com.google.android.gms.games.quest.** { *; }
+-keep class com.google.android.gms.nearby.** { *; }
+-keep class com.google.android.gms.ads.** { *; }
+
+-keep class com.pubmatic.sdk.** { *; }
+-keep class com.applovin.** { *; }
+-keep class com.chartboost.** { *; }
+
+-keep class com.guru.** { *; }
+-keep class guru.core.** { *; }
+
+-keep class com.onevcat.uniwebview.* { *; }
+-keep class com.iab.omid.* { *; }
+
+-keep public class com.tradplus.** { *; }
+-keep class com.tradplus.ads.** { *; }
+-keep class com.applovin.mediation.adapters.** { *; }
+
+# RxJava 2
+-keep class io.reactivex.** { *; }
+-keep interface io.reactivex.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepclassmembers class io.reactivex.** { *; }
+# Retrofit
+-keepattributes Signature, InnerClasses, EnclosingMethod
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+-keepattributes AnnotationDefault
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+-dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+-dontwarn javax.annotation.**
+-dontwarn kotlin.Unit
+-dontwarn retrofit2.KotlinExtensions
+-dontwarn retrofit2.KotlinExtensions$*
+-if interface * { @retrofit2.http.* <methods>; }
+-keep,allowobfuscation interface <1>
+-keep,allowobfuscation,allowshrinking class s5.** { *; }

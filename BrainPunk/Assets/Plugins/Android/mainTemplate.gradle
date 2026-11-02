@@ -1,0 +1,117 @@
+apply plugin: 'com.android.library'
+apply from: '../shared/keepUnitySymbols.gradle'
+**APPLY_PLUGINS**
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+// Android Resolver Dependencies Start
+    implementation 'androidx.appcompat:appcompat:1.5.0' // Packages/com.guru.artifact.consent/Editor/Dependencies.xml:8
+    implementation 'androidx.core:core:1.7.0' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:8
+    implementation 'androidx.lifecycle:lifecycle-process:2.4.0' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:17
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:10
+    implementation 'androidx.room:room-runtime:2.6.1' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:20
+    implementation 'androidx.room:room-rxjava2:2.6.1' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:21
+    implementation 'androidx.work:work-runtime:2.9.0' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:14
+    implementation 'androidx.work:work-runtime-ktx:2.9.0' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:15
+    implementation 'androidx.work:work-rxjava2:2.9.0' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:16
+    implementation 'com.android.installreferrer:installreferrer:2.1' // Packages/com.guru.unity.appsflyer/AppsFlyer/Editor/AppsFlyerDependencies.xml:7
+    implementation 'com.android.support:appcompat-v7:25.3.1' // Facebook.Unity.Editor.AndroidSupportLibraryResolver.addSupportLibraryDependency
+    implementation 'com.android.support:cardview-v7:25.3.1' // Facebook.Unity.Editor.AndroidSupportLibraryResolver.addSupportLibraryDependency
+    implementation 'com.android.support:customtabs:25.3.1' // Facebook.Unity.Editor.AndroidSupportLibraryResolver.addSupportLibraryDependency
+    implementation 'com.android.support:support-v4:25.3.1' // Facebook.Unity.Editor.AndroidSupportLibraryResolver.addSupportLibraryDependency
+    implementation 'com.appsflyer:af-android-sdk:6.17.3' // Packages/com.guru.unity.appsflyer/AppsFlyer/Editor/AppsFlyerDependencies.xml:5
+    implementation 'com.appsflyer:purchase-connector:2.1.0' // Packages/com.guru.unity.appsflyer/AppsFlyer/Editor/AppsFlyerDependencies.xml:8
+    implementation 'com.appsflyer:unity-wrapper:6.17.3' // Packages/com.guru.unity.appsflyer/AppsFlyer/Editor/AppsFlyerDependencies.xml:6
+    implementation 'com.facebook.android:facebook-applinks:17.0.2' // Packages/com.guru.unity.facebook/FacebookSDK/Plugins/Editor/Dependencies.xml:6
+    implementation 'com.facebook.android:facebook-core:17.0.2' // Packages/com.guru.unity.facebook/FacebookSDK/Plugins/Editor/Dependencies.xml:5
+    implementation 'com.facebook.android:facebook-gamingservices:17.0.2' // Packages/com.guru.unity.facebook/FacebookSDK/Plugins/Editor/Dependencies.xml:9
+    implementation 'com.facebook.android:facebook-login:17.0.2' // Packages/com.guru.unity.facebook/FacebookSDK/Plugins/Editor/Dependencies.xml:7
+    implementation 'com.facebook.android:facebook-share:17.0.2' // Packages/com.guru.unity.facebook/FacebookSDK/Plugins/Editor/Dependencies.xml:8
+    implementation 'com.google.android.gms:play-services-base:18.6.0' // Packages/com.google.firebase.app-core/Firebase/Editor/AppDependencies.xml:17
+    implementation 'com.google.android.play:core-common:2.0.4' // Packages/com.google.play.core/Editor/Dependencies.xml:3
+    implementation 'com.google.android.play:review:2.0.0' // Packages/com.google.play.review/Editor/Dependencies.xml:3
+    implementation 'com.google.android.ump:user-messaging-platform:2.1.0' // Packages/com.guru.artifact.consent/Editor/Dependencies.xml:9
+    implementation 'com.google.code.gson:gson:2.8.5' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:19
+    implementation 'com.google.firebase:firebase-analytics:22.4.0' // Packages/com.google.firebase.remote-config/Firebase/Editor/RemoteConfigDependencies.xml:15
+    implementation 'com.google.firebase:firebase-analytics-unity:12.10.0' // Packages/com.google.firebase.analytics/Firebase/Editor/AnalyticsDependencies.xml:18
+    implementation 'com.google.firebase:firebase-app-unity:12.10.0' // Packages/com.google.firebase.app-core/Firebase/Editor/AppDependencies.xml:22
+    implementation 'com.google.firebase:firebase-auth:23.2.0' // Packages/com.google.firebase.auth/Firebase/Editor/AuthDependencies.xml:13
+    implementation 'com.google.firebase:firebase-auth-unity:12.10.0' // Packages/com.google.firebase.auth/Firebase/Editor/AuthDependencies.xml:20
+    implementation 'com.google.firebase:firebase-common:21.0.0' // Packages/com.google.firebase.app-core/Firebase/Editor/AppDependencies.xml:13
+    implementation 'com.google.firebase:firebase-config:22.1.0' // Packages/com.google.firebase.remote-config/Firebase/Editor/RemoteConfigDependencies.xml:13
+    implementation 'com.google.firebase:firebase-config-unity:12.10.0' // Packages/com.google.firebase.remote-config/Firebase/Editor/RemoteConfigDependencies.xml:20
+    implementation 'com.google.firebase:firebase-crashlytics-ndk:19.4.2' // Packages/com.google.firebase.crashlytics/Firebase/Editor/CrashlyticsDependencies.xml:13
+    implementation 'com.google.firebase:firebase-crashlytics-unity:12.10.0' // Packages/com.google.firebase.crashlytics/Firebase/Editor/CrashlyticsDependencies.xml:20
+    implementation 'com.google.firebase:firebase-dynamic-links:22.1.0' // Packages/com.google.firebase.dynamic-links/Firebase/Editor/DynamicLinksDependencies.xml:13
+    implementation 'com.google.firebase:firebase-dynamic-links-unity:12.10.0' // Packages/com.google.firebase.dynamic-links/Firebase/Editor/DynamicLinksDependencies.xml:20
+    implementation 'com.google.firebase:firebase-firestore:25.1.3' // Packages/com.google.firebase.firestore/Firebase/Editor/FirestoreDependencies.xml:13
+    implementation 'com.google.firebase:firebase-firestore-unity:12.10.0' // Packages/com.google.firebase.firestore/Firebase/Editor/FirestoreDependencies.xml:20
+    implementation 'com.google.firebase:firebase-iid:21.1.0' // Packages/com.google.firebase.messaging/Firebase/Editor/MessagingDependencies.xml:17
+    implementation 'com.google.firebase:firebase-installations:18.0.0' // Packages/com.google.firebase.installations/Firebase/Editor/InstallationsDependencies.xml:13
+    implementation 'com.google.firebase:firebase-installations-unity:12.10.0' // Packages/com.google.firebase.installations/Firebase/Editor/InstallationsDependencies.xml:20
+    implementation 'com.google.firebase:firebase-messaging:24.1.1' // Packages/com.google.firebase.messaging/Firebase/Editor/MessagingDependencies.xml:13
+    implementation 'com.google.firebase:firebase-messaging-unity:12.10.0' // Packages/com.google.firebase.messaging/Firebase/Editor/MessagingDependencies.xml:24
+    implementation 'com.google.flatbuffers:flatbuffers-java:1.12.0' // Packages/com.google.firebase.messaging/Firebase/Editor/MessagingDependencies.xml:19
+    implementation 'com.google.games:gpgs-plugin-support:2.1.0' // Packages/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
+    implementation 'com.google.net.cronet:cronet-okhttp:0.1.0' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:27
+    implementation 'com.jakewharton.timber:timber:4.7.1' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:18
+    implementation 'com.mapzen:on-the-road:0.8.1' // Packages/com.guru.artifact.consent/Editor/Dependencies.xml:10
+    implementation 'com.parse.bolts:bolts-android:1.4.0' // Packages/com.guru.unity.facebook/FacebookSDK/Plugins/Editor/Dependencies.xml:4
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:25
+    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:26
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.7.1' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:24
+    implementation 'com.squareup.retrofit2:converter-gson:2.7.1' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:23
+    implementation 'com.squareup.retrofit2:retrofit:2.7.1' // Packages/com.guru.artifact.analytics/Editor/Dependencies.xml:22
+    implementation 'guru.ads.fusion:fusionads:1.5.2' // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:21
+// Android Resolver Dependencies End
+**DEPS**}
+
+// Android Resolver Exclusions Start
+android {
+  packaging {
+      exclude ('/lib/armeabi/*' + '*')
+      exclude ('/lib/mips/*' + '*')
+      exclude ('/lib/mips64/*' + '*')
+      exclude ('/lib/x86/*' + '*')
+      exclude ('/lib/x86_64/*' + '*')
+  }
+}
+// Android Resolver Exclusions End
+android {
+    namespace "com.unity3d.player"
+    ndkPath "**NDKPATH**"
+    ndkVersion "**NDKVERSION**"
+
+    compileSdk **APIVERSION**
+    buildToolsVersion = "**BUILDTOOLS**"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        minSdk **MINSDK**
+        targetSdk **TARGETSDK**
+        ndk {
+            abiFilters **ABIFILTERS**
+            debugSymbolLevel **DEBUGSYMBOLLEVEL**
+        }
+        versionCode **VERSIONCODE**
+        versionName '**VERSIONNAME**'
+        consumerProguardFiles 'proguard-unity.txt'**USER_PROGUARD**
+**DEFAULT_CONFIG_SETUP**
+    }
+
+    lint {
+        abortOnError false
+    }
+
+    androidResources {
+        noCompress = **BUILTIN_NOCOMPRESS** + unityStreamingAssets.tokenize(', ')
+        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~"
+    }**PACKAGING**
+}
+**IL_CPP_BUILD_SETUP**
+**SOURCE_BUILD_SETUP**
+**EXTERNAL_SOURCES**

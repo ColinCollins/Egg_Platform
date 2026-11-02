@@ -1,0 +1,194 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 185f6993d5150494d98da50e26cb1c25, type: 3}
+  m_Name: AssetBundleCollectorSetting
+  m_EditorClassIdentifier: 
+  ShowPackageView: 1
+  ShowEditorAlias: 1
+  UniqueBundleName: 0
+  Packages:
+  - PackageName: GamePackage
+    PackageDesc: "\u9ED8\u8BA4\u6253\u5305\u914D\u7F6E"
+    EnableAddressable: 0
+    LocationToLower: 0
+    IncludeAssetGUID: 0
+    AutoCollectShaders: 1
+    IgnoreRuleName: NormalIgnoreRule
+    Groups:
+    - GroupName: Config
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Game/Configs
+        CollectorGUID: adc48de8903c5a245bdc20a6f47acf62
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackCollector
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+    - GroupName: Level
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Game/Prefabs/Level
+        CollectorGUID: 78646b0bc3db2484aa5b1b6d09bd909b
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackSeparately
+        FilterRuleName: CollectPrefab
+        AssetTags: 
+        UserData: 
+      - CollectPath: Assets/Game/Prefabs/DrawLevel
+        CollectorGUID: a04bf0166b76d9e49991fe8a3f1227c9
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackSeparately
+        FilterRuleName: CollectPrefab
+        AssetTags:
+        UserData:
+      - CollectPath: Assets/Game/Prefabs/WannerLevel
+        CollectorGUID: 39d30675343e18c4d9f8a0a36db874bf
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackSeparately
+        FilterRuleName: CollectPrefab
+        AssetTags:
+        UserData:
+      - CollectPath: Assets/Game/Prefabs/DigLevel
+        CollectorGUID: ca3ab666435747648b2a7e483ec99927
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackSeparately
+        FilterRuleName: CollectPrefab
+        AssetTags:
+        UserData:
+      - CollectPath: Assets/Game/ArtSrc/Spines
+        CollectorGUID: 2ef16efba4e080b429309185dd08e797
+        CollectorType: 2
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackTopDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+    - GroupName: SharedCommon
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Game/Prefabs/LevelItems
+        CollectorGUID: b4f7b97f57d44d15a4a2fd373ce8d001
+        CollectorType: 2
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackCollector
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+      - CollectPath: Assets/Game/ArtSrc/Font
+        CollectorGUID: b4f7b97f57d44d15a4a2fd373ce8d002
+        CollectorType: 2
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackSeparately
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+      - CollectPath: Assets/Game/ArtSrc/Physics
+        CollectorGUID: b4f7b97f57d44d15a4a2fd373ce8d004
+        CollectorType: 2
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackCollector
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+      - CollectPath: Assets/Game/ArtSrc/Shader
+        CollectorGUID: d4a8573462208a941b9237f29dc05528
+        CollectorType: 2
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+    - GroupName: SharedSprites
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Game/ArtSrc/Sprites
+        CollectorGUID: 49c8dc68d72fe414f97c673e31211a99
+        CollectorType: 2
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+    - GroupName: SharedTimeline
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Game/ArtSrc/Animations/Timeline
+        CollectorGUID: 2d0f2d0f28fa4b21a468e6f2c8b8c0e7
+        CollectorType: 2
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackCollector
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+    - GroupName: SharedFx
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Epic Toon FX
+        CollectorGUID: b4f7b97f57d44d15a4a2fd373ce8d005
+        CollectorType: 2
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackTopDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+    - GroupName: Skin
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Game/ArtSrc/Skins
+        CollectorGUID: cb8b1d90a23c481458aff85a09251b50
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectSprite
+        AssetTags: 
+        UserData: 
+      - CollectPath: Assets/Game/Prefabs/Skins
+        CollectorGUID: cf6b57b6e7fae804abcbc1150ec94a41
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectPrefab
+        AssetTags: 
+        UserData: 
+    - GroupName: Postcard
+      GroupDesc: "\u660E\u4FE1\u7247\u9875\u9762\u8D44\u6E90"
+      AssetTags: postcard
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Game/UI/Postcard/Prefabs/Pages
+        CollectorGUID: 4182e176003f4bb2b9ea31b77e7ca11f
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackSeparately
+        FilterRuleName: CollectPrefab
+        AssetTags: postcard
+        UserData:

@@ -1,0 +1,63 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Game.Dig;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+public static class DigCollectRunner
+{
+    const string Output="C:/Users/admin/AppData/Local/Temp/brainpunk-dig-collect-20261013/";
+    static readonly List<string> checks=new List<string>();
+    static FieldInfo Field(string name)=>typeof(DigLevelCtrl).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic);
+    static T Get<T>(DigLevelCtrl level,string name)=>(T)Field(name).GetValue(level);
+    static void Set(DigLevelCtrl level,string name,object value)=>Field(name).SetValue(level,value);
+    static void Collect(DigLevelCtrl level)=>typeof(DigLevelCtrl).GetMethod("CollectLevelObjects",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(level,null);
+    static void Check(bool good,string name){if(!good)throw new Exception(name);checks.Add("通过："+name);}
+    static void Save(PrefabStage stage)=>typeof(PrefabStage).GetMethod("SavePrefab",BindingFlags.Instance|BindingFlags.NonPublic,null,Type.EmptyTypes,null).Invoke(stage,null);
+    public static void Run()
+    {
+        try
+        {
+            var stage=PrefabStageUtility.OpenPrefab("Assets/Game/Prefabs/DigLevel/DigLevel_003.prefab");
+            var level=stage.prefabContentsRoot.GetComponent<DigLevelCtrl>();
+            var placed=level.GetComponentsInChildren<DigActorCtrl>(true);
+            Check(placed.Length==2,"真实003已有两个角色");
+            Set(level,"actors",Array.Empty<DigActorCtrl>());
+            EditorUtility.SetDirty(level);
+            Undo.ClearAll();
+            Collect(level);Undo.FlushUndoRecordObjects();
+            Check(Get<DigActorCtrl[]>(level,"actors").SequenceEqual(placed),"ReachTarget按层级收集全部角色");
+            Check(Get<DigActorCtrl>(level,"actor")==placed[0],"历史单角色同步为首项");
+            Check(!level.IsRuntimeReady,"编辑器收集不初始化运行态");
+            Undo.PerformUndo();
+            Check(Get<DigActorCtrl[]>(level,"actors").Length==0,"Undo还原收集前列表");
+            placed[1].gameObject.SetActive(false);
+            var nested=new GameObject("仅TEMP嵌套关卡边界验证");nested.transform.SetParent(level.transform,false);nested.AddComponent<DigLevelCtrl>();
+            var nestedChild=new GameObject("仅TEMP角色病菌");nestedChild.transform.SetParent(nested.transform,false);nestedChild.AddComponent<DigActorCtrl>();nestedChild.AddComponent<DigGermCtrl>();
+            Set(level,"victoryCondition",DigVictoryCondition.ConsumeAllGerms);Collect(level);
+            Check(Get<DigActorCtrl[]>(level,"actors").SequenceEqual(placed),"包含inactive角色且排除嵌套关卡角色");
+            Check(Get<DigGermCtrl[]>(level,"germs").Length==0,"排除嵌套关卡病菌");
+            UnityEngine.Object.DestroyImmediate(nested);placed[1].gameObject.SetActive(true);
+            Set(level,"victoryCondition",DigVictoryCondition.ReachTarget);Collect(level);
+            var snapshot=Get<DigActorCtrl[]>(level,"actors").ToArray();Collect(level);
+            Check(Get<DigActorCtrl[]>(level,"actors").SequenceEqual(snapshot),"重复收集结果不增加重复引用");
+            Save(stage);StageUtility.GoToMainStage();
+            stage=PrefabStageUtility.OpenPrefab("Assets/Game/Prefabs/DigLevel/DigLevel_003.prefab");level=stage.prefabContentsRoot.GetComponent<DigLevelCtrl>();
+            Check(Get<DigActorCtrl[]>(level,"actors").Length==2&&Get<DigActorCtrl[]>(level,"actors").All(x=>x),"003保存重开保留两个有效引用");
+            StageUtility.GoToMainStage();
+            stage=PrefabStageUtility.OpenPrefab("Assets/Game/Prefabs/DigLevel/DigLevel_001.prefab");level=stage.prefabContentsRoot.GetComponent<DigLevelCtrl>();
+            var allGerms=level.GetComponentsInChildren<DigGermCtrl>(true);var allActors=level.GetComponentsInChildren<DigActorCtrl>(true);
+            var camera=Get<Camera>(level,"inputCamera");var terrain=Get<DigTerrainCtrl>(level,"terrain");
+            Set(level,"germs",Array.Empty<DigGermCtrl>());Collect(level);
+            Check(allGerms.Length>0&&Get<DigGermCtrl[]>(level,"germs").SequenceEqual(allGerms)&&Get<DigActorCtrl[]>(level,"actors").SequenceEqual(allActors),"吞噬模式同时收集角色和全部病菌");
+            Set(level,"victoryCondition",DigVictoryCondition.ReachTarget);var configured=new[]{allGerms[0]};Set(level,"germs",configured);Collect(level);
+            Check(Get<DigGermCtrl[]>(level,"germs")==configured,"ReachTarget保留已有病菌配置");
+            Check(Get<Camera>(level,"inputCamera")==camera&&Get<DigTerrainCtrl>(level,"terrain")==terrain,"收集不改相机和地形引用");
+            File.WriteAllLines(Output+"checks.txt",checks);Debug.Log("Dig收集按钮真实Editor检查通过 "+checks.Count+" 项");EditorApplication.Exit(0);
+        }
+        catch(Exception e){File.WriteAllText(Output+"failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}
+    }
+}

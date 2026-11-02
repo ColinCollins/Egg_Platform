@@ -1,0 +1,36 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Game.Dig;
+using UnityEditor;
+using UnityEngine;
+public sealed class Dig004EntryProbe:MonoBehaviour
+{
+    public GameObject Prefab;
+    readonly List<string> checks=new List<string>();
+    void Check(bool value,string name){if(!value)throw new Exception(name);checks.Add("通过："+name);}
+    void Start()
+    {
+        try
+        {
+            Physics2D.simulationMode=SimulationMode2D.Script;
+            var live=Instantiate(Prefab);var level=live.GetComponent<DigLevelCtrl>();
+            var actorField=typeof(DigLevelCtrl).GetField("actors",BindingFlags.Instance|BindingFlags.NonPublic);
+            var actors=(DigActorCtrl[])actorField.GetValue(level);
+            Check(actors.Length==1&&actors[0],"修正保存的Actors仅一项有效角色");
+            Check(live.GetComponentsInChildren<DigActorCtrl>(true).Length==1,"第四关实际仅放置一个角色");
+            actorField.SetValue(level,new[]{actors[0],null});
+            bool rejected=false;try{level.InitializeRuntime();}catch(InvalidOperationException e){rejected=e.Message.Contains("角色引用缺失或重复");}
+            Check(rejected&&!level.IsRuntimeReady,"复现旧列表空第二项导致初始化拒绝");
+            actorField.SetValue(level,actors);level.InitializeRuntime();
+            Check(level.IsRuntimeReady,"修正后完整InitializeRuntime成功，包括地图接入");
+            level.SetInputEnabled(true);level.SetPaused(false);
+            var body=(Rigidbody2D)typeof(DigActorCtrl).GetField("physicsBody",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(actors[0]);
+            Check(body.simulated&&!level.IsResultLocked,"初始化后可以开启角色物理及输入");
+            File.WriteAllLines("C:/Users/admin/AppData/Local/Temp/brainpunk-dig004-entry-20261013/checks.txt",checks);
+            Debug.Log("第四关初始化检查通过 "+checks.Count+" 项");EditorApplication.Exit(0);
+        }
+        catch(Exception e){File.WriteAllText("C:/Users/admin/AppData/Local/Temp/brainpunk-dig004-entry-20261013/failed.txt",e.ToString());Debug.LogException(e);EditorApplication.Exit(1);}
+    }
+}

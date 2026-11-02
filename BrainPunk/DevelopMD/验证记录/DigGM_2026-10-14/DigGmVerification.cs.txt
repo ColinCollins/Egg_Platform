@@ -1,0 +1,84 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Game.Dig;
+using UnityEngine;
+public sealed class DigGmVerification:MonoBehaviour
+{
+    const string Output="C:/Users/admin/AppData/Local/Temp/brainpunk-dig-failure-20261013/gm-checks.txt";
+    readonly List<string> checks=new List<string>();
+    readonly List<string> logs=new List<string>();
+    GameObject live; DigLevelCtrl runtime; DigPlayCtrl ctrl; DigGameLevelCtrl levels; ProbeChoice choice; ProbeHud hud;
+    int results; DigLevelResult lastResult;
+    static void Set(object o,string n,object v)=>o.GetType().GetField(n,BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.Public).SetValue(o,v);
+    static object Call(object o,string n,params object[] args)=>o.GetType().GetMethod(n,BindingFlags.NonPublic|BindingFlags.Instance|BindingFlags.Public).Invoke(o,args);
+    void Check(bool p,string n){if(!p)throw new Exception(n);checks.Add(n);Debug.Log("DIG_GM_CHECK "+checks.Count+" "+n);}
+    Transform Node(string n,Transform p){var go=new GameObject(n);go.transform.SetParent(p,false);return go.transform;}
+    void Fresh(string current="A")
+    {
+        if(live){live.SetActive(false);Destroy(live);}
+        live=new GameObject("GM Probe"); results=0; logs.Clear();Bear.UI.UIManager.Instance=new Bear.UI.UIManager();
+        DB.DigGame=new Bear.SaveModule.DigGame();DB.Saves=0;DB.SaveResult=true;
+        GameManager.Instance=new GameManager(); PlayCtrl.Instance=new PlayCtrl();Game.OneLinkManager.Instance=new Game.OneLinkManager();
+        levels=new DigGameLevelCtrl();GameManager.Instance.DigGameLevel=levels;
+        int i=0;foreach(string id in new[]{"A","B","C","40999"}) {int sortId=++i*10;levels._levelSorts.Add(new Config.DigLevelSort{Id=sortId,Path=id});levels.Data[id]=new Config.DigLevelData{Id=id,Path="DigLevel_"+id};}
+        runtime=live.AddComponent<DigLevelCtrl>();var actorObj=Node("Actor",live.transform).gameObject;
+        var rb=actorObj.AddComponent<Rigidbody2D>();rb.gravityScale=0;var circle=actorObj.AddComponent<CircleCollider2D>();var actor=actorObj.AddComponent<DigActorCtrl>();
+        Set(actor,"body",Node("Body",actorObj.transform));Set(actor,"physicsBody",rb);Set(actor,"circle",circle);
+        var camera=Node("Camera",live.transform).gameObject.AddComponent<Camera>();camera.enabled=false;camera.orthographic=true;camera.transform.position=new Vector3(0,0,-10);
+        Set(runtime,"inputCamera",camera);Set(runtime,"actors",new[]{actor});Set(runtime,"terrain",live.AddComponent<DigTerrainCtrl>());Set(runtime,"germs",Array.Empty<DigGermCtrl>());
+        Set(runtime,"victoryCondition",DigVictoryCondition.ReachTarget);Set(runtime,"victoryDelay",.1f);
+        runtime.ConfigureInk(10,Vector3.zero);runtime.InitializeRuntime();runtime.SetPaused(false);runtime.SetInputEnabled(true);
+        runtime.Resolved+=r=>{results++;lastResult=r;};
+        choice=live.AddComponent<ProbeChoice>();hud=live.AddComponent<ProbeHud>();ctrl=new DigPlayCtrl();
+        int currentId=levels._levelSorts.Find(x=>x.Path==current).Id;
+        DB.DigGame.UnlockLevels.Add(currentId);DB.DigGame.CurrentLevel=currentId;
+        ctrl.Setup(runtime,levels.Data[current],currentId,choice,hud);GameManager.Instance.ControllerManager.ActiveController=ctrl;
+    }
+    IEnumerator Start()
+    {
+        Physics2D.simulationMode=SimulationMode2D.Script;Application.logMessageReceived+=(m,s,t)=>logs.Add(m);
+        var run=Verify();while(true){object wait;try{if(!run.MoveNext())break;wait=run.Current;}catch(Exception ex){File.WriteAllText(Output,string.Join("\n",checks)+"\nFAIL "+ex);Debug.LogException(ex);UnityEditor.EditorApplication.Exit(1);yield break;}yield return wait;}
+        File.WriteAllText(Output,string.Join("\n",checks)+"\nPASS "+checks.Count);Debug.Log("DIG_GM_PASS "+checks.Count);UnityEditor.EditorApplication.Exit(0);
+    }
+    IEnumerator Verify()
+    {
+        Fresh();var panel=new GMPanel();Call(panel,"UnlockAllLevel",new object[]{null});
+        Check(DB.DigGame.UnlockLevels.SetEquals(new[]{10,20,30,40})&&DB.Saves==1,"全解锁覆盖Dig排序与TBC，批量只保存一次");
+        Check(PlayCtrl.Instance.Level.Calls==1&&GameManager.Instance.DrawGameLevel.Calls==1&&GameManager.Instance.IWannerGameLevel.Calls==1,"同一次按钮仍调用Main/Draw/IWanner");
+        Check(DB.DigGame.CurrentLevel==10&&DB.DigGame.PassedLevels.Count==0&&DB.DigGame.Stars.Count==0,"全解锁只补权限，不写通关星级当前关");
+        Check(Bear.UI.UIManager.Instance.Panel.RefreshCalls==1,"解锁成功后刷新现存Dig选关列表");
+        Call(panel,"UnlockAllLevel",new object[]{null});Check(DB.Saves==1,"重复全解锁不重复保存");
+        Fresh();DB.SaveResult=false;Call(panel,"UnlockAllLevel",new object[]{null});Check(DB.Saves==1&&logs.Exists(s=>s.Contains("incomplete")&&s.Contains("dig:False"))&&Bear.UI.UIManager.Instance.Panel.RefreshCalls==0,"Dig保存失败汇总为incomplete，保留其它玩法调用且不执行成功刷新");
+        Fresh();levels.IsReady=false;Call(panel,"UnlockAllLevel",new object[]{null});Check(DB.Saves==0&&DB.DigGame.UnlockLevels.Count==1,"Dig配置未就绪不解锁");
+
+        Fresh();Call(panel,"SendVictoryEvent",new object[]{null});Check(runtime.IsResultLocked&&results==0,"GM胜利经活动接口锁普通关并等待原胜利延迟");
+        Check(!ctrl.TryForceVictory("repeat"),"GM重复胜利拒绝");yield return new WaitForSeconds(.2f);Check(results==1&&lastResult==DigLevelResult.Succeeded,"真实关卡运行时只提交一次成功");
+        Fresh("40999");Call(panel,"SendVictoryEvent",new object[]{null});Check(!runtime.IsResultLocked&&results==0,"TBC拒绝GM胜利");
+
+        Fresh();Game.OneLinkManager.Instance.IsLinked=true;Call(panel,"NextLevel",new object[]{null});
+        Check(ctrl.CurrentId==20&&ctrl.TransitionCalls==1&&DB.DigGame.CurrentLevel==20,"GM下一关进入相邻配置并保存当前关");
+        Check(DB.DigGame.UnlockLevels.Contains(20)&&DB.DigGame.PassedLevels.Count==0&&DB.DigGame.Stars.Count==0,"GM可进入锁定目标但不伪造跳过关卡成功");
+        Check(string.Join(",",ctrl.Trace)=="exit:A,start:B"&&!ctrl.HasSessions,"复用入口按旧关exit、新关start顺序调用并清会话资格");
+        Check(!Game.OneLinkManager.Instance.IsLinked&&Game.OneLinkManager.Instance.EndCalls==1,"GM切关结束旧DeepLink来源");
+        Check(!ctrl.TryEnterNextLevel(),"切关受理后立即拒绝重复命令");
+        Fresh("B");Call(panel,"LastLevel",new object[]{null});Check(ctrl.CurrentId==10&&ctrl.TransitionCalls==1,"GM上一关进入前一配置");
+        Fresh();Check(!ctrl.TryEnterPreviousLevel()&&ctrl.TransitionCalls==0&&DB.Saves==0,"首关不循环且不改存档");
+        Fresh("40999");Check(!ctrl.TryEnterNextLevel()&&ctrl.TransitionCalls==0,"TBC末尾无下一关");Check(ctrl.TryEnterPreviousLevel()&&ctrl.CurrentId==30,"TBC可返回前一普通关");
+        Fresh("C");Check(ctrl.TryEnterNextLevel()&&ctrl.CurrentId==40,"最后普通关下一关进入有效TBC配置");
+        Fresh("B");levels._levelSorts.Reverse();Check(ctrl.TryEnterNextLevel()&&ctrl.CurrentId==10,"按当前重排序列定位内容，非旧序号加一");
+        Fresh();levels._levelSorts.RemoveAt(0);Check(!ctrl.TryEnterNextLevel()&&ctrl.TransitionCalls==0,"当前内容已移除时拒绝切关");
+        Fresh();levels.Data.Remove("B");Check(!ctrl.TryEnterNextLevel()&&DB.Saves==0,"目标配置缺失时拒绝，不写权限和存档");
+        Fresh();DB.SaveResult=false;Check(ctrl.TryEnterNextLevel()&&ctrl.CurrentId==20&&logs.Exists(s=>s.Contains("保存失败")),"GM切关保存失败沿原日志策略，已受理切换不回滚");
+
+        foreach(string state in new[]{"inactive","uninitialized","transition","paused","resolved","runtime_pause","background","locked","choice_ad","hud_ad","no_runtime"})
+        {
+            Fresh();switch(state){case "inactive":ctrl.IsActive=false;break;case "uninitialized":ctrl.IsInitialized=false;break;case "transition":Set(ctrl,"_transitioning",true);break;case "paused":Set(ctrl,"_paused",true);break;case "resolved":Set(ctrl,"_resolved",true);break;case "runtime_pause":runtime.SetPaused(true);break;case "background":Call(runtime,"OnApplicationPause",true);break;case "locked":runtime.TryForceVictory();break;case "choice_ad":choice.IsRewardAdPending=true;break;case "hud_ad":hud.IsRewardAdRequesting=true;break;case "no_runtime":Set(ctrl,"_runtime",null);break;}
+            Check(!ctrl.TryForceVictory("gate")&&!ctrl.TryEnterNextLevel()&&!ctrl.TryEnterPreviousLevel()&&ctrl.TransitionCalls==0&&DB.Saves==0,"三项GM命令拒绝状态："+state);
+        }
+        Fresh();GameManager.Instance.ControllerManager.ActiveController=null;Call(panel,"NextLevel",new object[]{null});Call(panel,"LastLevel",new object[]{null});Call(panel,"SendVictoryEvent",new object[]{null});Check(ctrl.TransitionCalls==0&&!runtime.IsResultLocked,"无活动控制器不回退到Dig或主线");
+        Fresh();var other=new OtherGM();GameManager.Instance.ControllerManager.ActiveController=other;Call(panel,"NextLevel",new object[]{null});Call(panel,"LastLevel",new object[]{null});Call(panel,"SendVictoryEvent",new object[]{null});Check(other.Calls==3&&ctrl.TransitionCalls==0&&!runtime.IsResultLocked,"其它活动玩法仍收到原IGMFeature命令，Dig不响应");
+    }
+}

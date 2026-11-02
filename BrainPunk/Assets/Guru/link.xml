@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<linker>
+  <assembly fullname="Guru.SDK.Framework.Core">
+    <type fullname="Guru.SDK.Framework.Core.*" preserve="all"/>
+  </assembly>
+
+  <assembly fullname="Mono.Data.Sqlite" preserve="all"/>
+
+  <assembly fullname="System.Data" preserve="all"/>
+
+  <assembly fullname="Guru.SDK.Framework.Utils">
+    <type fullname="Guru.SDK.Framework.Utils.*" preserve="all"/>
+    <type fullname="SQLite.*" preserve="all"/>
+    <type fullname="GuruSqlite.*" preserve="all"/>
+  </assembly>
+
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="GuruSqlite.AndroidSqliteApi/JavaResultCallbackProxy" preserve="all"/>
+  </assembly>
+
+  <assembly fullname="Guru.SDK.Framework.Ads.FusionAds">
+    <type fullname="Guru.SDK.Framework.Ads.FusionAds.*" preserve="all"/>
+  </assembly>
+
+  <assembly fullname="Guru.UniKit.Ads.FusionAds">
+    <type fullname="Guru.UniKit.Ads.FusionAds.*" preserve="all"/>
+  </assembly>
+
+  <assembly fullname="Guru.UniKit.Platform.Tools">
+    <type fullname="Guru.UniKit.Platform.Tools.*" preserve="all"/>
+  </assembly>
+
+  <!-- Preserve NSubstitute types to prevent code stripping issues -->
+  <assembly fullname="NSubstitute">
+    <type fullname="NSubstitute.*" preserve="all"/>
+  </assembly>
+  
+  <assembly fullname="Castle.Core">
+    <type fullname="Castle.*" preserve="all"/>
+  </assembly>
+
+  <!--  Apple GameKit  -->
+  <assembly fullname="Apple.Core" preserve="all"/>
+  <assembly fullname="Apple.Core.Runtime" preserve="all"/>
+  <assembly fullname="Apple.GameKit" preserve="all"/>
+  <assembly fullname="System.Collections" preserve="all"/>
+  <assembly fullname="System.Collections.Generic" preserve="all"/>
+  <assembly fullname="System.Reflection" preserve="all"/>
+</linker>

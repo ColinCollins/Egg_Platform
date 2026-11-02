@@ -1,0 +1,112 @@
+---
+alwaysApply: true
+---
+
+## 2D Side-Scrolling Platformer Project Standards
+
+### Project Type
+This is a **2D Side-Scrolling Platformer** game developed using Unity 2D systems.
+
+### Coordinate System
+- **X-Axis**: Horizontal direction (left/right movement)
+- **Y-Axis**: Vertical direction (up/down movement, jumping, gravity)
+- **Z-Axis**: Typically used for depth sorting (Sorting Layer/Order), not for gameplay logic movement
+- Default coordinate system: X positive to the right, Y positive upward
+
+### 2D Component Usage Standards
+- **Physics System**: Use `Rigidbody2D` and `Collider2D` (not 3D versions)
+  - `Rigidbody2D` for physics movement
+  - `Collider2D` (BoxCollider2D, CircleCollider2D, etc.) for collision detection
+  - Use `Physics2D` API for 2D physics queries
+
+- **Rendering System**: Use `SpriteRenderer` to render 2D sprites
+  - Use `SortingLayer` and `SortingOrder` to control render order
+  - Use `Sprite` assets instead of 3D Meshes
+
+- **Camera**: Use `Camera` in `orthographic` mode
+  - Set `orthographicSize` to control field of view
+  - Camera typically follows the player along the X-axis
+
+### Movement and Physics Standards
+- **2D Movement**: Only consider X and Y axes
+  ```csharp
+  // ✅ Correct: 2D movement
+  Vector2 position = new Vector2(x, y);
+  transform.position = new Vector3(position.x, position.y, transform.position.z); // Z remains unchanged
+  
+  // ❌ Wrong: Using 3D movement
+  transform.position += Vector3.forward * speed; // Should not use Z-axis movement
+  ```
+
+- **Direction Calculation**: Use `Mathf.Atan2` to calculate 2D angles
+  ```csharp
+  // ✅ Correct: 2D direction
+  Vector2 direction = target - current;
+  float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+  transform.rotation = Quaternion.Euler(0f, 0f, angle);
+  ```
+
+- **Distance Calculation**: Use `Vector2.Distance` or `Vector2.magnitude`
+  ```csharp
+  // ✅ Correct: 2D distance
+  float distance = Vector2.Distance(pos1, pos2);
+  // or
+  float distance = (pos2 - pos1).magnitude;
+  ```
+
+### Collision Detection Standards
+- Use `OnTriggerEnter2D`, `OnTriggerExit2D`, `OnCollisionEnter2D` and other 2D collision callbacks
+- Use `Physics2D.Raycast`, `Physics2D.OverlapCircle` and other 2D physics queries
+- Avoid using 3D physics APIs (such as `Physics.Raycast`)
+
+### Animation and Tweening
+- Use **DOTween** for animation and tweening
+- 2D movement animations only manipulate X and Y coordinates
+- Rotation animations only manipulate Z-axis (2D rotation)
+
+### Code Examples
+```csharp
+// ✅ Correct: 2D platformer movement script
+public class PlatformerMovement : MonoBehaviour
+{
+    private Rigidbody2D rb;
+    private SpriteRenderer spriteRenderer;
+    
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+    
+    void Update()
+    {
+        // 2D movement: only consider X-axis
+        float moveX = Input.GetAxisRaw("Horizontal");
+        rb.velocity = new Vector2(moveX * speed, rb.velocity.y);
+        
+        // 2D direction: flip Sprite
+        if (moveX > 0)
+            spriteRenderer.flipX = false;
+        else if (moveX < 0)
+            spriteRenderer.flipX = true;
+    }
+}
+
+// ✅ Correct: 2D collision detection
+void OnTriggerEnter2D(Collider2D collision)
+{
+    // 2D collision handling
+}
+
+// ❌ Wrong: Using 3D physics
+void OnTriggerEnter(Collider collision) // Wrong! Should use Collider2D
+{
+}
+```
+
+### Important Notes
+- All gameplay logic movement only uses X and Y axes
+- Z-axis is only used for render sorting, not for gameplay logic
+- Use 2D physics components and APIs
+- Camera uses orthographic projection
+- Sprite assets are used for visual representation

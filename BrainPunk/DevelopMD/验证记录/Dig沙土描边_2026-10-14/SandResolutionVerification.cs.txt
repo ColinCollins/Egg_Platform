@@ -1,0 +1,72 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using Game.Scripts.Effects;
+
+public static class SandResolutionVerification
+{
+ const string Output="C:/Users/admin/AppData/Local/Temp/brainpunk-dig-compress-20261013/";
+ static readonly List<string> checks=new List<string>();
+ static void Check(bool ok,string label){if(!ok)throw new Exception(label);checks.Add("通过："+label);}
+ static Texture2D Render(Camera c,SpriteRenderer sr,Material m,int w,int h,string label)
+ {
+  sr.sharedMaterial=m;var rt=new RenderTexture(w,h,0,RenderTextureFormat.ARGB32,RenderTextureReadWrite.Linear);rt.Create();
+  c.targetTexture=rt;RenderPipeline.SubmitRenderRequest(c,new UniversalRenderPipeline.SingleCameraRequest{destination=rt});
+  var old=RenderTexture.active;RenderTexture.active=rt;var texture=new Texture2D(w,h,TextureFormat.RGBA32,false,true);texture.ReadPixels(new Rect(0,0,w,h),0,0);texture.Apply();RenderTexture.active=old;
+  File.WriteAllBytes(Output+"resolution-"+label+".png",texture.EncodeToPNG());c.targetTexture=null;rt.Release();return texture;
+ }
+ public static void Run()
+ {
+  try
+  {
+   var rp=AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/UniversalRP.asset");GraphicsSettings.defaultRenderPipeline=rp;QualitySettings.renderPipeline=rp;
+   var go=new GameObject("实际沙土");var sr=go.AddComponent<SpriteRenderer>();sr.sprite=AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Actual/Sp_wd_tk_02.png");sr.drawMode=SpriteDrawMode.Sliced;sr.size=new Vector2(17.7f,7.2f);go.transform.position=new Vector3(0,-0.45f,10);
+   var cameraObject=new GameObject("实际沙土相机");var c=cameraObject.AddComponent<Camera>();c.orthographic=true;c.orthographicSize=5;c.transform.position=new Vector3(0,0,-20);c.clearFlags=CameraClearFlags.SolidColor;c.backgroundColor=Color.clear;c.allowHDR=false;c.allowMSAA=false;
+   var template=AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/Prefabs/DigLevel/Maps/DigLevel_001_MapPreview.mat");var current=new Material(template);SceneSpriteBrushClear.ApplySpriteGeometryToMaterial(current,sr);
+   var original=new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/Game/ArtSrc/Shader/Sprites/MaskRTSprite.shader"));
+   var mask=AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Game/Prefabs/DigLevel/Maps/DigLevel_001_MapMask.png");
+   Check(sr.sprite&&mask&&mask.isReadable,"实际首关Sprite与遮罩资源");
+   float inner=current.GetFloat("_InnerOutlineWidth"),outer=current.GetFloat("_OuterOutlineWidth");
+   foreach(var size in new[]{new Vector2Int(640,360),new Vector2Int(1280,720),new Vector2Int(3088,1440)})
+   {
+    current.SetFloat("_InnerOutlineWidth",0);current.SetFloat("_OuterOutlineWidth",0);current.SetTexture("_MaskTex",Texture2D.blackTexture);
+    var baseline=Render(c,sr,original,size.x,size.y,size.x+"-native");var displayed=Render(c,sr,current,size.x,size.y,size.x+"-no-mask");
+    var b=baseline.GetPixels32();var d=displayed.GetPixels32();int different=Enumerable.Range(0,b.Length).Count(i=>Math.Abs(b[i].r-d[i].r)>3||Math.Abs(b[i].g-d[i].g)>3||Math.Abs(b[i].b-d[i].b)>3||Math.Abs(b[i].a-d[i].a)>3);
+    Check(different<size.x*size.y/1000,"实际非对称Border在"+size+"下与原生Sliced对齐");
+    current.SetTexture("_MaskTex",mask);var erased=Render(c,sr,current,size.x,size.y,size.x+"-mask");
+    int samples=0,bad=0;
+    for(int y=15;y<size.y-15;y+=17)for(int x=15;x<size.x-15;x+=17)
+    {
+     Vector3 world=new Vector3(((x+0.5f)/size.x-0.5f)*10f*size.x/size.y,((y+0.5f)/size.y-0.5f)*10f,10);
+     Vector3 local=sr.transform.InverseTransformPoint(world);Bounds bounds=sr.localBounds;
+     float u=(local.x-bounds.min.x)/bounds.size.x,v=(local.y-bounds.min.y)/bounds.size.y;
+     if(u<0.01f||u>0.99f||v<0.01f||v>0.99f)continue;
+     float r=mask.GetPixelBilinear(u,v).r;float eps=2f/size.y*10/7.2f;
+     bool stable=true;foreach(var off in new[]{new Vector2(-eps,0),new Vector2(eps,0),new Vector2(0,-eps),new Vector2(0,eps)})if(Math.Abs(mask.GetPixelBilinear(u+off.x,v+off.y).r-r)>0.02f)stable=false;
+     if(!stable)continue;samples++;float expected=baseline.GetPixel(x,y).a*(1-r);
+     if(Math.Abs(erased.GetPixel(x,y).a-expected)>0.025f)bad++;
+    }
+    Check(samples>100&&bad==0,"实际遮罩坐标在"+size+"下无拉伸偏移（"+samples+"点，错误"+bad+"）");
+    current.SetFloat("_InnerOutlineWidth",inner);current.SetFloat("_OuterOutlineWidth",outer);
+    Render(c,sr,current,size.x,size.y,size.x+"-outline");
+   }
+   var p=mask.GetPixels32();var seen=new bool[p.Length];var components=new List<string>();int width=mask.width,height=mask.height;
+   for(int i=0;i<p.Length;i++)
+   {
+    if(seen[i]||p[i].r<128)continue;var queue=new Queue<int>();queue.Enqueue(i);seen[i]=true;int minX=width,minY=height,maxX=0,maxY=0,count=0;
+    while(queue.Count>0){int id=queue.Dequeue(),x=id%width,y=id/width;count++;minX=Math.Min(minX,x);maxX=Math.Max(maxX,x);minY=Math.Min(minY,y);maxY=Math.Max(maxY,y);
+     foreach(int next in new[]{x>0?id-1:-1,x+1<width?id+1:-1,y>0?id-width:-1,y+1<height?id+width:-1})if(next>=0&&!seen[next]&&p[next].r>=128){seen[next]=true;queue.Enqueue(next);}}
+    if(count>30){float worldW=(maxX-minX+1)/(float)width*17.7f,worldH=(maxY-minY+1)/(float)height*7.2f;components.Add("洞框 "+worldW+"x"+worldH+" 世界单位，宽高比="+worldW/worldH);}
+   }
+   File.WriteAllLines(Output+"resolution-hole-bounds.txt",components);File.WriteAllLines(Output+"sand-resolution-checks.txt",checks);
+   Debug.Log("SAND_RESOLUTION_PASS="+checks.Count);EditorApplication.Exit(0);
+  }
+  catch(Exception e){File.WriteAllLines(Output+"sand-resolution-checks.txt",checks);Debug.LogException(e);EditorApplication.Exit(1);}
+ }
+}
+

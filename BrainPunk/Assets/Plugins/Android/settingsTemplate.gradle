@@ -1,0 +1,63 @@
+pluginManagement {
+    repositories {
+        **ARTIFACTORYREPOSITORY**
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+include ':launcher', ':unityLibrary'
+**INCLUDES**
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        **ARTIFACTORYREPOSITORY**
+        google()
+        mavenCentral()
+// Android Resolver Repos Start
+        def unityProjectPath = $/file:///**DIR_UNITYPROJECT**/$.replace("\\", "/")
+        maven {
+            url "https://android-sdk.is.com" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url "https://artifact.bytedance.com/repository/pangle" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url "https://s3.amazonaws.com/smaato-sdk-releases/" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url "https://verve.jfrog.io/artifactory/verve-gradle-release" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url "https://dl-maven-android.mintegral.com/repository/mbridge_android_sdk_oversea" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url "https://repo.pubmatic.com/artifactory/public-repos" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url "https://artifactory.bidmachine.io/bidmachine" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url "https://cboost.jfrog.io/artifactory/chartboost-ads/" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url "https://maven.ogury.co" // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url (unityProjectPath + "/Assets/GeneratedLocalRepo/Guru/m2repository") // Packages/com.guru.artifact.fusionads/Editor/Dependencies.xml:20
+        }
+        maven {
+            url (unityProjectPath + "/Assets/GeneratedLocalRepo/Firebase/m2repository") // Packages/com.google.firebase.analytics/Firebase/Editor/AnalyticsDependencies.xml:18, Packages/com.google.firebase.app-core/Firebase/Editor/AppDependencies.xml:22, Packages/com.google.firebase.auth/Firebase/Editor/AuthDependencies.xml:20, Packages/com.google.firebase.crashlytics/Firebase/Editor/CrashlyticsDependencies.xml:20, Packages/com.google.firebase.dynamic-links/Firebase/Editor/DynamicLinksDependencies.xml:20, Packages/com.google.firebase.firestore/Firebase/Editor/FirestoreDependencies.xml:20, Packages/com.google.firebase.installations/Firebase/Editor/InstallationsDependencies.xml:20, Packages/com.google.firebase.messaging/Firebase/Editor/MessagingDependencies.xml:24, Packages/com.google.firebase.remote-config/Firebase/Editor/RemoteConfigDependencies.xml:20
+        }
+        maven {
+            url (unityProjectPath + "/Assets/GeneratedLocalRepo/Editor/m2repository") // Packages/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
+        }
+        mavenLocal()
+// Android Resolver Repos End
+        flatDir {
+            dirs "${project(':unityLibrary').projectDir}/libs"
+        }
+    }
+}

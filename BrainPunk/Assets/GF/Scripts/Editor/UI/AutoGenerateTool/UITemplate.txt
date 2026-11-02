@@ -1,0 +1,62 @@
+using GF;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace {UI_NAMESPACE}
+{
+    [UIViewAttribute({UI_LAYER}, "{UI_PATH}", {UI_HIDE})]
+    public class {UI_NAME} : UIView
+    {
+        #region 自动生成代码，勿修改
+        
+                
+        
+        #endregion
+        
+        public override BaseLogic CreateLogic(params object[] args)
+        {
+        	// 添加需要绑定的Logic，若无则返回null
+        	return null;
+        }
+        
+        /// <summary>
+        /// 首次打开界面调用
+        /// </summary>
+        public override void OnEnter()
+        {
+            base.OnEnter();
+        }
+        
+        /// <summary>
+        /// 添加响应事件，在OnEnter之前调用
+        /// </summary>
+        public override void AddEvent()
+        {
+            base.AddEvent();
+        }
+        
+        /// <summary>
+        /// 二次打开界面调用
+        /// </summary>
+        public override void OnRefresh()
+        {
+            base.OnRefresh();
+        }
+        
+        /// <summary>
+        /// 退出界面调用
+        /// </summary>
+        public override void OnExit()
+        {
+            base.OnExit();
+        }
+        
+        /// <summary>
+        /// 销毁界面调用
+        /// </summary>
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
+        }
+    }
+}
